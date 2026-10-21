@@ -206,7 +206,9 @@
       $('lista').appendChild(c);
     });
     if (!dados.ordem.length) $('lista').innerHTML = '<div class="card">Seu treino desta semana ainda não foi lançado. Fale com o Luis.</div>';
-    if (!$('nome').value) $('nome').value = dados.nome || '';
+    // O check-in vai pelo código do aluno: o nome sai da planilha, não precisa digitar
+    $('nome').value = dados.nome || '';
+    $('c-nome').hidden = !!dados.nome;
     progresso();
   }
 
@@ -268,6 +270,7 @@
 
   function valores() {
     return {
+      codigo: codigo || '',
       nome: $('nome').value.trim(),
       dias: resp.dias, sensacao: resp.sensacao, cargas: resp.cargas, falha: resp.falha,
       motivo: resp.motivo || '', motivoOutro: $('motivoOutro').value,
