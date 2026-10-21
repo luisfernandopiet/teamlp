@@ -1,6 +1,6 @@
 // Guarda os arquivos do app para abrir rápido e funcionar sem internet.
 // Os dados do treino não passam por aqui: o app guarda o último treino no próprio aparelho.
-const CACHE = 'teamlp-v1';
+const CACHE = 'teamlp-v2';
 const ARQUIVOS = ['./', 'index.html', 'manifest.webmanifest', 'logo.webp', 'icon-192.png', 'icon-512.png', 'icon-180.png'];
 
 self.addEventListener('install', (e) => {
@@ -11,12 +11,13 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
-// Arquivos do próprio app: tenta a internet primeiro (pega atualizações), cai no cache sem conexão
+// Arquivos do próprio app: tenta a internet primeiro (pega atualizações), cai no cache sem conexão.
+// 'no-cache' faz o celular conferir com o GitHub se há versão nova, em vez de usar a cópia de até 10 min.
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request.url, { cache: 'no-cache' })
       .then((r) => { const copia = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copia)); return r; })
       .catch(() => caches.match(e.request, { ignoreSearch: true }))
   );
