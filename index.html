@@ -83,6 +83,7 @@
   .ex-titulo { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 800; line-height: 1.05; text-transform: uppercase; }
   .video { position: relative; width: 100%; max-width: 330px; margin: 0 auto; aspect-ratio: 9 / 16; max-height: 62vh; border-radius: 14px; overflow: hidden; background: #000; }
   .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video .capa { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
   .semvideo { padding: 32px 20px; text-align: center; font-size: 14px; line-height: 1.5; color: #5F5B52; background: #fff; border: 1px dashed var(--linha); border-radius: 14px; }
   .dado { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; color: #5F5B52; }
   .dado b { color: #141414; font: 700 19px 'Barlow Condensed', sans-serif; text-align: right; }
@@ -308,6 +309,28 @@
   }
   window.addEventListener('hashchange', rota);
 
+  // Vídeo só de imagem: sempre sem som e sem os controles do YouTube (o aluno pode estar ouvindo música).
+  // Uma capa por cima bloqueia o player; tocar nela só pausa ou continua.
+  let estadoVideo = -1;
+  window.addEventListener('message', (ev) => {
+    if (ev.origin !== 'https://www.youtube.com') return;
+    try { const d = JSON.parse(ev.data); const s = d.event === 'onStateChange' ? d.info : (d.info || {}).playerState; if (typeof s === 'number') estadoVideo = s; } catch (e) {}
+  });
+  function videoMudo(id, nome) {
+    const caixa = document.createDocumentFragment();
+    const f = document.createElement('iframe');
+    f.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&mute=1&loop=1&playlist=' + id + '&playsinline=1&rel=0&controls=0&disablekb=1&fs=0&iv_load_policy=3&enablejsapi=1';
+    f.allow = 'autoplay; encrypted-media'; f.referrerPolicy = 'strict-origin-when-cross-origin'; f.title = 'Vídeo: ' + nome; f.tabIndex = -1;
+    const cmd = (func) => { if (f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: 'command', func: func, args: [] }), 'https://www.youtube.com'); };
+    estadoVideo = -1;
+    f.addEventListener('load', () => { if (f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1 }), 'https://www.youtube.com'); cmd('mute'); });
+    const capa = document.createElement('button');
+    capa.type = 'button'; capa.className = 'capa'; capa.setAttribute('aria-label', 'Pausar ou continuar o vídeo');
+    capa.addEventListener('click', () => { cmd('mute'); cmd(estadoVideo === 1 ? 'pauseVideo' : 'playVideo'); });
+    caixa.append(f, capa);
+    return caixa;
+  }
+
   function desenharExercicio(l, n, lista) {
     const e = lista[n - 1];
     const chave = l + '/' + n + '/' + (e.v || '');
@@ -318,11 +341,7 @@
     $('ex-video').innerHTML = '';
     $('ex-video').hidden = !e.v; $('ex-semvideo').hidden = !!e.v;
     if (e.v) {
-      const f = document.createElement('iframe');
-      f.src = 'https://www.youtube.com/embed/' + e.v + '?autoplay=1&mute=1&loop=1&playlist=' + e.v + '&playsinline=1&rel=0';
-      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
-      f.allowFullscreen = true; f.referrerPolicy = 'strict-origin-when-cross-origin'; f.title = 'Vídeo: ' + e.ex;
-      $('ex-video').appendChild(f);
+      $('ex-video').appendChild(videoMudo(e.v, e.ex));
     }
     $('ex-pres').textContent = e.p || '';
     $('ex-tec').textContent = e.tec || '';
