@@ -73,6 +73,24 @@
   nav { position: fixed; left: 0; right: 0; bottom: 0; background: #0A0A0A; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 8px; z-index: 5; }
   nav button { flex: 1; max-width: 220px; height: 52px; border: 0; border-radius: 12px; background: transparent; color: var(--cinza); font: 700 16px 'Barlow Condensed', sans-serif; letter-spacing: .08em; text-transform: uppercase; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
   nav button[aria-current="page"] { color: var(--ouro-claro); background: #1B1C1F; }
+  .card.toque { cursor: pointer; }
+  .card.toque:active { background: var(--campo); }
+  .play { flex: 0 0 34px; height: 34px; border-radius: 17px; align-self: center; background: #F1E7CF; color: var(--ouro-texto); display: flex; align-items: center; justify-content: center; }
+  /* Página do exercício */
+  .voltar { align-self: flex-start; height: 42px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--linha); background: #fff; font: 700 16px 'Barlow Condensed', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: #3A352B; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 20px; background: #F1E7CF; color: #3A352B; }
+  .ex-titulo { margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 800; line-height: 1.05; text-transform: uppercase; }
+  .video { position: relative; width: 100%; max-width: 330px; margin: 0 auto; aspect-ratio: 9 / 16; max-height: 62vh; border-radius: 14px; overflow: hidden; background: #000; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .semvideo { padding: 32px 20px; text-align: center; font-size: 14px; line-height: 1.5; color: #5F5B52; background: #fff; border: 1px dashed var(--linha); border-radius: 14px; }
+  .dado { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; color: #5F5B52; }
+  .dado b { color: #141414; font: 700 19px 'Barlow Condensed', sans-serif; text-align: right; }
+  .dicas { padding: 14px 16px; border-radius: 16px; background: #ECE4D0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.5; color: #3A352B; }
+  .nav-ex { display: flex; align-items: center; justify-content: space-between; }
+  .nav-ex button { height: 42px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--linha); background: transparent; font: 700 16px 'Barlow Condensed', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: #3A352B; }
+  .nav-ex button:disabled { opacity: .35; }
+  .nav-ex span { font-size: 13px; color: #5F5B52; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -113,6 +131,21 @@
     <div class="abas" id="abas" role="group" aria-label="Treinos"></div>
     <div id="lista" style="display:flex;flex-direction:column;gap:10px"></div>
     <div class="aviso" id="aviso"></div>
+    <div class="lema">DISCIPLINA. MÉTODO. EVOLUÇÃO.</div>
+  </main>
+
+  <main id="tela-exercicio" hidden>
+    <button class="voltar" id="voltar" type="button">‹ Voltar ao treino</button>
+    <div class="tags"><span class="tag" id="ex-onde"></span></div>
+    <h2 class="ex-titulo" id="ex-titulo"></h2>
+    <div class="video" id="ex-video"></div>
+    <div class="semvideo" id="ex-semvideo">O vídeo deste exercício ainda não está pronto. Qualquer dúvida, fale com o Luis.</div>
+    <div class="card">
+      <div class="dado"><span>Séries × repetições</span><b id="ex-pres"></b></div>
+      <div class="dado" id="ex-tec-linha"><span>Técnica</span><b id="ex-tec"></b></div>
+    </div>
+    <div class="dicas" id="ex-dicas"></div>
+    <div class="nav-ex"><button id="ex-ant" type="button">‹ Anterior</button><span id="ex-pos"></span><button id="ex-prox" type="button">Próximo ›</button></div>
     <div class="lema">DISCIPLINA. MÉTODO. EVOLUÇÃO.</div>
   </main>
 
@@ -165,10 +198,12 @@
   let codigo = daUrl || ler('lp_codigo');
   let dados = null;
   let letra = ler('lp_letra');
+  let exDesenhado = '', veioDaLista = false;
 
   function mostrarTela(t) {
-    ['codigo', 'treino', 'checkin'].forEach((x) => { $('tela-' + x).hidden = x !== t; });
-    $('cab-treino').hidden = t === 'checkin';
+    ['codigo', 'treino', 'checkin', 'exercicio'].forEach((x) => { $('tela-' + x).hidden = x !== t; });
+    if (t !== 'exercicio') { $('ex-video').innerHTML = ''; exDesenhado = ''; } // para o vídeo ao sair da página
+    $('cab-treino').hidden = t === 'checkin' || t === 'exercicio';
     $('cab-checkin').hidden = t !== 'checkin';
     $('nav').hidden = t === 'codigo';
     document.querySelectorAll('nav button').forEach((b) => {
@@ -176,7 +211,10 @@
     });
     window.scrollTo(0, 0);
   }
-  document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => mostrarTela(b.dataset.tela)));
+  document.querySelectorAll('nav button').forEach((b) => b.addEventListener('click', () => {
+    if (location.hash) { history.replaceState(null, '', location.pathname + location.search); veioDaLista = false; }
+    mostrarTela(b.dataset.tela);
+  }));
 
   // ---------- Treino ----------
   function desenharTreino() {
@@ -196,8 +234,12 @@
     });
     $('lista').innerHTML = '';
     (dados.treinos[letra] || []).forEach((e, i) => {
-      const c = document.createElement('div'); c.className = 'card';
-      c.innerHTML = '<div class="ex"><div class="num"></div><div class="ex-info"><div class="ex-nome"></div><div class="ex-tec"></div><div class="pill"></div></div></div>';
+      const c = document.createElement('div'); c.className = 'card toque';
+      c.setAttribute('role', 'button'); c.tabIndex = 0;
+      c.innerHTML = '<div class="ex"><div class="num"></div><div class="ex-info"><div class="ex-nome"></div><div class="ex-tec"></div><div class="pill"></div></div>' +
+        '<div class="play" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"></path></svg></div></div>';
+      c.addEventListener('click', () => abrirExercicio(letra, i + 1));
+      c.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); abrirExercicio(letra, i + 1); } });
       c.querySelector('.num').textContent = i + 1;
       c.querySelector('.ex-nome').textContent = e.ex;
       c.querySelector('.ex-tec').textContent = e.tec || '';
@@ -215,7 +257,7 @@
   async function carregar() {
     if (!codigo) { mostrarTela('codigo'); return; }
     const salvo = ler('lp_dados_' + codigo);
-    if (salvo) { try { dados = JSON.parse(salvo); mostrarTela('treino'); desenharTreino(); } catch (e) {} }
+    if (salvo) { try { dados = JSON.parse(salvo); mostrarTela('treino'); desenharTreino(); rota(); } catch (e) {} }
     $('aviso').textContent = 'Atualizando...';
     try {
       const r = await fetch(API + '?formato=json&a=' + encodeURIComponent(codigo), { cache: 'no-store' });
@@ -226,8 +268,9 @@
         return;
       }
       dados = d; guardar('lp_dados_' + codigo, JSON.stringify(d));
-      mostrarTela($('tela-checkin').hidden ? 'treino' : 'checkin');
+      if ($('tela-exercicio').hidden) mostrarTela($('tela-checkin').hidden ? 'treino' : 'checkin');
       desenharTreino();
+      rota();
       $('aviso').textContent = '';
     } catch (e) {
       $('aviso').textContent = dados ? 'Sem internet: mostrando o último treino salvo.' : '';
@@ -240,6 +283,65 @@
     const c = $('codigo').value.trim();
     if (!c) return;
     codigo = c; guardar('lp_codigo', c); $('erro-codigo').style.display = 'none'; carregar();
+  });
+
+  // ---------- Página do exercício (endereço #ex/A/3 = treino A, exercício 3) ----------
+  // O vídeo do YouTube toca dentro do app; "Voltar ao treino" volta para a mesma lista.
+  let rolagem = 0;
+  function abrirExercicio(l, n) { veioDaLista = true; rolagem = window.scrollY; location.hash = 'ex/' + encodeURIComponent(l) + '/' + n; }
+  function semRota() { history.replaceState(null, '', location.pathname + location.search); }
+  function voltarParaLista() {
+    veioDaLista = false;
+    mostrarTela('treino'); desenharTreino();
+    window.scrollTo(0, rolagem); // volta no mesmo ponto da lista
+  }
+
+  function rota() {
+    const m = location.hash.match(/^#ex\/([^/]+)\/(\d+)$/);
+    if (!m) { if (!$('tela-exercicio').hidden) voltarParaLista(); return; }
+    if (!dados || dados.erro) return;
+    const l = decodeURIComponent(m[1]), n = Number(m[2]), lista = dados.treinos[l] || [];
+    if (!lista[n - 1]) { semRota(); if (!$('tela-exercicio').hidden) voltarParaLista(); return; }
+    if (letra !== l) { letra = l; guardar('lp_letra', l); desenharTreino(); }
+    desenharExercicio(l, n, lista);
+    if ($('tela-exercicio').hidden) mostrarTela('exercicio');
+  }
+  window.addEventListener('hashchange', rota);
+
+  function desenharExercicio(l, n, lista) {
+    const e = lista[n - 1];
+    const chave = l + '/' + n + '/' + (e.v || '');
+    if (chave === exDesenhado) return;
+    exDesenhado = chave;
+    $('ex-onde').textContent = 'Treino ' + l + ' · exercício ' + n + ' de ' + lista.length;
+    $('ex-titulo').textContent = e.ex;
+    $('ex-video').innerHTML = '';
+    $('ex-video').hidden = !e.v; $('ex-semvideo').hidden = !!e.v;
+    if (e.v) {
+      const f = document.createElement('iframe');
+      f.src = 'https://www.youtube.com/embed/' + e.v + '?autoplay=1&mute=1&loop=1&playlist=' + e.v + '&playsinline=1&rel=0';
+      f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      f.allowFullscreen = true; f.referrerPolicy = 'strict-origin-when-cross-origin'; f.title = 'Vídeo: ' + e.ex;
+      $('ex-video').appendChild(f);
+    }
+    $('ex-pres').textContent = e.p || '';
+    $('ex-tec').textContent = e.tec || '';
+    $('ex-tec-linha').hidden = !e.tec;
+    const dicas = [];
+    if (/F\.E/i.test(e.tec || '')) dicas.push('<div><strong>F.E. (fase excêntrica):</strong> desça o peso devagar, alongando o músculo.</div>');
+    if (/pico/i.test(e.tec || '')) dicas.push('<div><strong>Pico:</strong> segure na contração pelo tempo indicado.</div>');
+    dicas.push('<div><strong>Descanso:</strong> 1min30 a 3min entre séries.</div>');
+    $('ex-dicas').innerHTML = dicas.join('');
+    $('ex-pos').textContent = n + ' / ' + lista.length;
+    $('ex-ant').disabled = n <= 1; $('ex-prox').disabled = n >= lista.length;
+    $('ex-ant').onclick = () => location.replace('#ex/' + encodeURIComponent(l) + '/' + (n - 1));
+    $('ex-prox').onclick = () => location.replace('#ex/' + encodeURIComponent(l) + '/' + (n + 1));
+    window.scrollTo(0, 0);
+  }
+
+  $('voltar').addEventListener('click', () => {
+    if (veioDaLista) { history.back(); return; } // mesmo caminho do botão voltar do celular
+    semRota(); voltarParaLista();
   });
 
   // ---------- Check-in (mesmas perguntas do Forms) ----------
