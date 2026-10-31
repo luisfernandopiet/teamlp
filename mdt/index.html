@@ -3,9 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Monte o seu treino · MDT</title>
+<title>Jornada MDT · Monte o seu treino</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="css/plano.css" rel="stylesheet">
 <script src="config.js"></script>
+<script src="js/leitor.js"></script>
+<script src="js/mdt.js"></script>
+<script src="js/plano-pdf.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{--bg:#0b0b0c;--panel:#151517;--panel2:#1b1b1e;--line:#2c2b29;--gold:#c9a24a;--gold2:#e8cf8a;--text:#ecebe8;--muted:#a3a19b;--red:#e07a6f;--green:#8fbf74;color-scheme:dark}
 *{box-sizing:border-box}
@@ -13,185 +20,334 @@ html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 'Inter',
 .wrap{max-width:640px;margin:0 auto;padding-block:28px 60px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
 h1,h2{font-family:'Oswald',Impact,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.02em;margin:0;text-wrap:balance}
 h1{font-size:clamp(30px,8vw,42px);line-height:1}
-h1 .g{color:var(--gold)}
-h2{font-size:18px;letter-spacing:.04em;color:var(--gold2);margin-bottom:12px}
+.g{color:var(--gold)}
+h2{font-size:19px;letter-spacing:.04em;color:var(--gold2);margin-bottom:6px}
 .kicker{color:var(--gold);font-size:12px;letter-spacing:.24em;text-transform:uppercase;font-weight:700}
 .lead{color:#d6d3cb;margin:12px 0 0}
-.steps{display:flex;gap:8px;margin:20px 0 4px;flex-wrap:wrap}
-.steps span{font-size:13px;border:1px solid var(--line);border-radius:20px;padding:5px 12px;color:var(--muted)}
-.steps b{color:var(--gold)}
-form{display:flex;flex-direction:column;gap:16px;margin-top:22px}
-fieldset{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:18px;margin:0;min-width:0}
-legend{padding:0 6px;font-family:'Oswald';text-transform:uppercase;letter-spacing:.06em;color:var(--gold2)}
+.passos{display:flex;gap:6px;margin:20px 0 4px;flex-wrap:wrap}
+.passos span{font-size:12.5px;border:1px solid var(--line);border-radius:20px;padding:5px 11px;color:var(--muted)}
+.passos span.on{border-color:var(--gold);color:var(--gold2)}
+.passos b{color:var(--gold)}
+.etapa{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:18px;margin-top:16px}
+.etapa[hidden]{display:none}
+.hint{font-size:13.5px;color:var(--muted);margin:0 0 12px}
 label{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
-.field{margin-bottom:14px}.field:last-child{margin-bottom:0}
-.hint{font-size:13px;color:var(--muted);font-weight:400;margin-top:4px}
-input[type=text],input[type=email],select,textarea{width:100%;background:#0f0f10;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:16px 'Inter',sans-serif}
+.field{margin-bottom:14px}
+input[type=text],input[type=email],input[type=number],select,textarea{width:100%;background:#0f0f10;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:16px 'Inter',sans-serif;min-width:0}
 textarea{min-height:110px;resize:vertical}
-input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,.chip:focus-within{outline:2px solid var(--gold2);outline-offset:2px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{position:relative}
 .chip input{position:absolute;opacity:0;inset:0;cursor:pointer}
 .chip span{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:14px;color:var(--muted);background:#0f0f10}
 .chip input:checked+span{border-color:var(--gold);color:#121212;background:var(--gold);font-weight:700}
-.drop{border:1.5px dashed #5a4a22;border-radius:10px;padding:20px;text-align:center;background:#16140f;cursor:pointer}
+.drop{display:block;border:1.5px dashed #5a4a22;border-radius:10px;padding:20px;text-align:center;background:#16140f;cursor:pointer}
 .drop b{color:var(--gold)}
 .drop input{display:none}
-.files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.files div{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#0f0f10;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px;color:var(--muted)}
-.files img{width:100%;height:100%;object-fit:cover}
-.files button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;cursor:pointer;font-size:13px;line-height:22px;padding:0}
+.fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.fotos div{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.fotos img{width:100%;height:100%;object-fit:cover}
+.fotos button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;cursor:pointer;font-size:13px;line-height:22px;padding:0}
 .ou{text-align:center;color:var(--muted);font-size:13px;margin:12px 0}
-.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#d6d3cb;font-weight:400}
-.check input{margin-top:3px;accent-color:var(--gold);width:18px;height:18px;flex:none}
-.send{background:var(--gold);color:#121212;border:0;border-radius:10px;padding:15px;font:800 15px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
-.send[disabled]{opacity:.5;cursor:default}
-.msg{border-radius:10px;padding:14px 16px;font-size:14.5px}
+.btn{display:block;width:100%;background:var(--gold);color:#121212;border:0;border-radius:10px;padding:15px;font:800 15px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-align:center;text-decoration:none;margin-top:6px}
+.btn.sec{background:transparent;color:var(--gold2);border:1px solid var(--goldd,#7d6326)}
+.btn[disabled]{opacity:.5;cursor:default}
+.msg{border-radius:10px;padding:13px 15px;font-size:14.5px;margin-top:12px}
 .msg.err{background:#2a1716;border:1px solid #5a2a26;color:#f3b4ac}
 .msg.ok{background:#16200f;border:1px solid #33502a;color:#cfe8bf}
-.done{text-align:center;padding:40px 10px}
-.done h1{margin:14px 0}
+.msg.info{background:#1e1a10;border:1px solid #5a4a22;color:var(--gold2)}
+.prog{height:6px;border-radius:6px;background:#0f0f10;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .3s}
+.dia{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--panel2)}
+.dia .topo{display:flex;gap:6px;margin-bottom:8px}
+.dia .topo input{font-weight:700}
+.ex{display:grid;grid-template-columns:1fr 34px;gap:6px;padding:8px 0;border-top:1px solid var(--line)}
+.ex .campos{display:grid;grid-template-columns:1fr 1fr 70px;gap:6px}
+.ex .campos input:first-child{grid-column:1/-1}
+.ex.falta select[data-c=grupo]{border-color:var(--red)}
+.ex small{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.dia .cab{display:grid;grid-template-columns:1fr 1fr 70px 34px;gap:6px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.dia .cab span:last-child{grid-column:3}
+.x{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;cursor:pointer;font-size:16px}
+.mais{background:transparent;border:1px dashed var(--line);color:var(--gold2);border-radius:8px;padding:9px;width:100%;cursor:pointer;font:600 14px 'Inter',sans-serif;margin-top:6px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#d6d3cb;font-weight:400}
+.check input{margin-top:3px;accent-color:var(--gold);width:18px;height:18px;flex:none}
+#render{position:absolute;left:-10000px;top:0}
+.previa{margin-top:14px;display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.previa img{height:220px;border-radius:4px;border:1px solid var(--line)}
 .foot{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;letter-spacing:.2em;text-transform:uppercase}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div id="tela-form">
-    <div class="kicker">MDT · Método Destrava Treino</div>
-    <h1 style="margin-top:10px">Monte o seu <span class="g">treino</span></h1>
-    <p class="lead">Envie o treino que você faz hoje e receba as suas 4 semanas adaptadas ao método, em PDF, no seu e-mail.</p>
-    <div class="steps"><span><b>1</b> Envie o treino</span><span><b>2</b> O plano é montado</span><span><b>3</b> Chega no seu e-mail</span></div>
+  <div class="kicker">Jornada MDT · Método Destrava Treino</div>
+  <h1 style="margin-top:10px">Monte o seu <span class="g">treino</span></h1>
+  <p class="lead">Envie o treino que você faz hoje e receba na hora as suas 4 semanas adaptadas ao método, em PDF.</p>
+  <div class="passos" id="passos"><span data-p="1"><b>1</b> Acesso</span><span data-p="2"><b>2</b> Rotina</span><span data-p="3"><b>3</b> Seu treino</span><span data-p="4"><b>4</b> Conferir</span><span data-p="5"><b>5</b> Plano</span></div>
 
-    <form id="form" novalidate>
-      <fieldset>
-        <legend>Seus dados</legend>
-        <div class="field"><label for="nome">Nome</label><input type="text" id="nome" autocomplete="name" required></div>
-        <div class="field"><label for="email">E-mail</label><input type="email" id="email" autocomplete="email" required><div class="hint">É para onde o seu plano vai ser enviado.</div></div>
-        <div class="field"><label for="codigo">Código de acesso</label><input type="text" id="codigo" autocomplete="off" required><div class="hint">Está na página 2 do seu e-book.</div></div>
-      </fieldset>
+  <!-- 1. Acesso -->
+  <section class="etapa" id="e1">
+    <h2>Acesso</h2>
+    <p class="hint">Use o mesmo e-mail da sua compra da Jornada MDT. Cada compra gera um plano.</p>
+    <div class="field"><label for="email">E-mail da compra</label><input type="email" id="email" autocomplete="email"></div>
+    <button class="btn" id="b1" type="button">Continuar</button>
+    <div id="m1"></div>
+  </section>
 
-      <fieldset>
-        <legend>Sua rotina</legend>
-        <div class="field"><label for="frequencia">Quantas vezes por semana você treina musculação?</label>
-          <select id="frequencia" required><option value="">Escolha</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
-        <div class="field"><label>O que você mais quer evoluir? <span class="hint" style="display:inline">(escolha 1 ou 2)</span></label>
-          <div class="chips" id="prioridades"></div></div>
-        <div class="field"><label for="dores">Tem alguma dor ou limitação? <span class="hint" style="display:inline">(opcional)</span></label>
-          <input type="text" id="dores" placeholder="Ex.: dor no ombro direito no supino"></div>
-      </fieldset>
+  <!-- 2. Rotina -->
+  <section class="etapa" id="e2" hidden>
+    <h2>Sua rotina</h2>
+    <div class="field"><label for="nome">Seu nome</label><input type="text" id="nome" autocomplete="name"></div>
+    <div class="field"><label for="frequencia">Quantas vezes por semana você treina musculação?</label>
+      <select id="frequencia"><option value="">Escolha</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+    <div class="field"><label>O que você mais quer evoluir? <span class="hint" style="display:inline">(1 ou 2)</span></label><div class="chips" id="prio"></div></div>
+    <div class="field"><label for="dores">Tem alguma dor ou limitação? <span class="hint" style="display:inline">(opcional)</span></label><input type="text" id="dores" placeholder="Ex.: dor no ombro direito no supino"></div>
+    <button class="btn" id="b2" type="button">Continuar</button>
+    <div id="m2"></div>
+  </section>
 
-      <fieldset>
-        <legend>Seu treino atual</legend>
-        <p class="hint" style="margin:0 0 12px">Mande do jeito que for mais fácil: foto da ficha, print do app, PDF ou escrito. Serve qualquer divisão (full body, AB, ABC…).</p>
-        <label class="drop" for="arquivos"><b>Toque para enviar fotos ou arquivos</b><br><span class="hint">Até 6 arquivos: fotos, prints ou PDF</span>
-          <input type="file" id="arquivos" multiple accept="image/*,application/pdf,.txt"></label>
-        <div class="files" id="lista"></div>
-        <div class="ou">ou</div>
-        <label for="texto">Escreva o seu treino</label>
-        <textarea id="texto" placeholder="Treino A: supino inclinado 4x10, crucifixo 3x12…&#10;Treino B: puxada alta 4x10…"></textarea>
-      </fieldset>
+  <!-- 3. Treino -->
+  <section class="etapa" id="e3" hidden>
+    <h2>Seu treino atual</h2>
+    <p class="hint">Foto da ficha, print do app ou escrito. Serve qualquer divisão: full body, AB, ABC…</p>
+    <label class="drop" for="arquivos"><b>Toque para tirar ou enviar fotos</b><br><span class="hint">Até 6 fotos. Foto reta, com boa luz, sai melhor.</span>
+      <input type="file" id="arquivos" multiple accept="image/*"></label>
+    <div class="fotos" id="fotos"></div>
+    <div class="ou">e/ou</div>
+    <label for="texto">Escreva o seu treino</label>
+    <textarea id="texto" placeholder="Treino A: supino inclinado 4x10, crucifixo 3x12…&#10;Treino B: puxada alta 4x10…"></textarea>
+    <button class="btn" id="b3" type="button">Ler meu treino</button>
+    <div class="prog" id="prog" hidden><i></i></div>
+    <div id="m3"></div>
+  </section>
 
-      <label class="check"><input type="checkbox" id="aceite" required><span>Concordo em enviar estes dados para a montagem do meu plano. As informações são usadas só para isso e o treino é lido por uma ferramenta automática.</span></label>
-      <div id="erro" class="msg err" hidden></div>
-      <button class="send" type="submit" id="enviar">Enviar meu treino</button>
-    </form>
-  </div>
+  <!-- 4. Conferir -->
+  <section class="etapa" id="e4" hidden>
+    <h2>Confira o seu treino</h2>
+    <p class="hint">Veja se está tudo certo e corrija o que precisar. Exercícios com o grupo em vermelho precisam que você escolha o músculo principal.</p>
+    <div id="dias"></div>
+    <button class="mais" id="novoDia" type="button">+ Treino</button>
+    <label class="check" style="margin-top:16px"><input type="checkbox" id="aceite"><span>Conferi o meu treino. Sei que cada compra gera um plano.</span></label>
+    <button class="btn" id="b4" type="button" style="margin-top:12px">Gerar meu plano</button>
+    <div class="prog" id="prog4" hidden><i></i></div>
+    <div id="m4"></div>
+  </section>
 
-  <div id="tela-ok" class="done" hidden>
-    <div class="kicker">Recebido</div>
-    <h1>Seu treino <span class="g" style="color:var(--gold)">chegou</span></h1>
-    <p class="lead">O seu plano das 4 semanas vai chegar no e-mail <b id="ok-email"></b>. Confira também a caixa de spam.</p>
-    <p class="hint">Protocolo: <span id="ok-id"></span></p>
-  </div>
+  <!-- 5. Plano -->
+  <section class="etapa" id="e5" hidden>
+    <h2>Seu plano está pronto</h2>
+    <p class="hint" id="t5">O PDF também foi enviado para o seu e-mail.</p>
+    <a class="btn" id="baixar" href="#" download="Plano MDT.pdf">Baixar meu plano (PDF)</a>
+    <div class="previa" id="previa"></div>
+  </section>
+
+  <!-- Compra já usada -->
+  <section class="etapa" id="eUsada" hidden>
+    <h2>Você já gerou o seu plano</h2>
+    <p class="hint">Cada compra da Jornada MDT gera um plano. Podemos mandar o seu plano de novo para o e-mail da compra.</p>
+    <button class="btn" id="bReenviar" type="button">Receber de novo por e-mail</button>
+    <div id="mU"></div>
+  </section>
+
   <div class="foot">Luis Pietchaki · Coach</div>
 </div>
+<div id="render"></div>
 
 <script>
-var GRUPOS = [['peito','Peito'],['costas','Costas'],['ombro','Ombro'],['biceps','Bíceps'],['triceps','Tríceps'],['quadriceps','Quadríceps'],['posterior','Posterior de coxa'],['gluteos','Glúteos'],['panturrilha','Panturrilha'],['abdomen','Abdômen']];
-var arquivos = [];
 var $ = function (id) { return document.getElementById(id); };
+var GRUPOS = MDT.GRUPOS, fotos = [], treino = null, pdfBase64 = null;
 
-$('prioridades').innerHTML = GRUPOS.map(function (g) {
-  return '<label class="chip"><input type="checkbox" name="prio" value="' + g[0] + '"><span>' + g[1] + '</span></label>';
+function msg(id, texto, tipo) { $(id).innerHTML = texto ? '<div class="msg ' + (tipo || 'err') + '">' + texto + '</div>' : ''; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function etapa(n) {
+  ['e1', 'e2', 'e3', 'e4', 'e5', 'eUsada'].forEach(function (id) { $(id).hidden = true; });
+  $(n === 'usada' ? 'eUsada' : 'e' + n).hidden = false;
+  Array.prototype.forEach.call(document.querySelectorAll('#passos span'), function (s) { s.className = Number(s.dataset.p) <= n ? 'on' : ''; });
+  window.scrollTo(0, 0);
+}
+function api(dados) {
+  return fetch(URL_SCRIPT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(dados) })
+    .then(function (r) { return r.json(); });
+}
+function progresso(id, f) { $(id).hidden = false; $(id).firstElementChild.style.width = Math.round(f * 100) + '%'; }
+
+// 1. Acesso
+$('b1').addEventListener('click', function () {
+  var email = $('email').value.trim(), b = this;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return msg('m1', 'Confira o seu e-mail.');
+  b.disabled = true; b.textContent = 'Conferindo…'; msg('m1', '');
+  api({ acao: 'verificar', email: email }).then(function (r) {
+    b.disabled = false; b.textContent = 'Continuar';
+    if (!r.ok) return msg('m1', esc(r.erro));
+    if (r.status === 'liberada') { if (r.nome && !$('nome').value) $('nome').value = r.nome; return etapa(2); }
+    if (r.status === 'usada') return etapa('usada');
+    if (r.status === 'cancelada') return msg('m1', 'Esta compra foi cancelada ou reembolsada.');
+    msg('m1', 'Não encontramos uma compra com este e-mail. Use o mesmo e-mail da compra. Se você acabou de comprar, espere alguns minutos e tente de novo.');
+  }).catch(function () { b.disabled = false; b.textContent = 'Continuar'; msg('m1', 'Não deu para conferir agora. Confira a internet e tente de novo.'); });
+});
+
+// 2. Rotina
+$('prio').innerHTML = ['peito', 'costas', 'ombro', 'biceps', 'triceps', 'quadriceps', 'posterior', 'gluteos', 'panturrilha', 'abdomen'].map(function (g) {
+  return '<label class="chip"><input type="checkbox" value="' + g + '"><span>' + GRUPOS[g] + '</span></label>';
 }).join('');
-$('prioridades').addEventListener('change', function (e) {
-  var marcados = document.querySelectorAll('input[name=prio]:checked');
-  if (marcados.length > 2) e.target.checked = false;
+$('prio').addEventListener('change', function (e) { if (prioridades().length > 2) e.target.checked = false; });
+function prioridades() { return Array.prototype.map.call(document.querySelectorAll('#prio input:checked'), function (i) { return i.value; }); }
+$('b2').addEventListener('click', function () {
+  if (!$('nome').value.trim()) return msg('m2', 'Escreva o seu nome.');
+  if (!$('frequencia').value) return msg('m2', 'Escolha quantas vezes por semana você treina.');
+  if (!prioridades().length) return msg('m2', 'Escolha pelo menos 1 grupo que você mais quer evoluir.');
+  msg('m2', ''); etapa(3);
 });
 
-// Fotos são reduzidas antes do envio (cabe melhor e chega mais rápido).
-function reduzir(file) {
-  return new Promise(function (ok, falha) {
-    var img = new Image(), url = URL.createObjectURL(file);
-    img.onload = function () {
-      var max = 1600, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
-      var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url);
-      ok({ nome: file.name.replace(/\.[^.]+$/, '') + '.jpg', tipo: 'image/jpeg', dados: c.toDataURL('image/jpeg', 0.82).split(',')[1], previa: c.toDataURL('image/jpeg', 0.5) });
-    };
-    img.onerror = function () { URL.revokeObjectURL(url); falha(new Error('Não consegui abrir a imagem ' + file.name + '.')); };
-    img.src = url;
-  });
-}
-function lerArquivo(file) {
-  return new Promise(function (ok, falha) {
-    var r = new FileReader();
-    r.onload = function () { ok({ nome: file.name, tipo: file.type || 'text/plain', dados: String(r.result).split(',')[1] }); };
-    r.onerror = function () { falha(new Error('Não consegui ler ' + file.name + '.')); };
-    r.readAsDataURL(file);
-  });
-}
-function mostrarArquivos() {
-  $('lista').innerHTML = arquivos.map(function (a, i) {
-    return '<div>' + (a.previa ? '<img src="' + a.previa + '" alt="">' : a.nome) + '<button type="button" data-i="' + i + '" aria-label="Remover">×</button></div>';
-  }).join('');
-}
-$('lista').addEventListener('click', function (e) {
-  if (e.target.dataset.i) { arquivos.splice(Number(e.target.dataset.i), 1); mostrarArquivos(); }
-});
+// 3. Treino: fotos e leitura
 $('arquivos').addEventListener('change', function () {
-  var novos = Array.prototype.slice.call(this.files).slice(0, 6 - arquivos.length);
-  Promise.all(novos.map(function (f) {
-    if (f.size > 15 * 1024 * 1024) return Promise.reject(new Error(f.name + ' é grande demais (máximo 15 MB).'));
-    return /^image\//.test(f.type) ? reduzir(f) : lerArquivo(f);
-  })).then(function (lista) { arquivos = arquivos.concat(lista); mostrarArquivos(); erro(''); })
-    .catch(function (e) { erro(e.message); });
+  Array.prototype.slice.call(this.files, 0, 6 - fotos.length).forEach(function (f) {
+    var url = URL.createObjectURL(f); fotos.push({ arquivo: f, url: url }); mostrarFotos();
+  });
   this.value = '';
 });
+function mostrarFotos() {
+  $('fotos').innerHTML = fotos.map(function (f, i) { return '<div><img src="' + f.url + '" alt=""><button type="button" data-i="' + i + '" aria-label="Remover foto">×</button></div>'; }).join('');
+}
+$('fotos').addEventListener('click', function (e) { if (e.target.dataset.i) { fotos.splice(Number(e.target.dataset.i), 1); mostrarFotos(); } });
 
-function erro(t) { $('erro').textContent = t; $('erro').hidden = !t; }
+// Prepara a foto para a leitura: tamanho bom, cinza e com mais contraste.
+function preparar(f) {
+  return new Promise(function (ok, falha) {
+    var img = new Image();
+    img.onload = function () {
+      var k = Math.min(1, 2000 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      var g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
+      var d = g.getImageData(0, 0, c.width, c.height), p = d.data, min = 255, max = 0, i, v;
+      for (i = 0; i < p.length; i += 4) { v = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = v; if (v < min) min = v; if (v > max) max = v; }
+      var fator = 255 / Math.max(1, max - min);
+      for (i = 0; i < p.length; i += 4) { v = (p[i] - min) * fator; p[i] = p[i + 1] = p[i + 2] = v; }
+      g.putImageData(d, 0, 0); ok(c);
+    };
+    img.onerror = function () { falha(new Error('Não consegui abrir uma das fotos.')); };
+    img.src = f.url;
+  });
+}
 
-$('form').addEventListener('submit', function (e) {
-  e.preventDefault();
-  var prio = Array.prototype.map.call(document.querySelectorAll('input[name=prio]:checked'), function (i) { return i.value; });
-  var dados = {
-    acao: 'enviar', nome: $('nome').value.trim(), email: $('email').value.trim(), codigo: $('codigo').value.trim(),
-    frequencia: $('frequencia').value, prioritarios: prio, dores: $('dores').value.trim(), texto: $('texto').value.trim(),
-    arquivos: arquivos.map(function (a) { return { nome: a.nome, tipo: a.tipo, dados: a.dados }; })
-  };
-  if (!dados.nome) return erro('Escreva o seu nome.');
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email)) return erro('Confira o seu e-mail.');
-  if (!dados.codigo) return erro('Coloque o código de acesso que está no e-book.');
-  if (!dados.frequencia) return erro('Escolha quantas vezes por semana você treina.');
-  if (!prio.length) return erro('Escolha pelo menos 1 grupo que você mais quer evoluir.');
-  if (!dados.arquivos.length && dados.texto.length < 15) return erro('Envie uma foto ou arquivo do treino, ou escreva o treino.');
-  if (!$('aceite').checked) return erro('Marque a caixa de concordância para enviar.');
-  if (!/^https:\/\//.test(URL_SCRIPT)) return erro('Esta página ainda está em teste: o envio não está ligado.');
-
-  erro(''); $('enviar').disabled = true; $('enviar').textContent = 'Enviando…';
-  fetch(URL_SCRIPT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(dados) })
-    .then(function (r) { return r.json(); })
-    .then(function (r) {
-      if (!r.ok) throw new Error(r.erro || 'Não deu para enviar agora. Tente de novo.');
-      $('ok-email').textContent = dados.email; $('ok-id').textContent = r.id;
-      $('tela-form').hidden = true; $('tela-ok').hidden = false; window.scrollTo(0, 0);
-    })
-    .catch(function (e) {
-      erro(e.message && e.message !== 'Failed to fetch' ? e.message : 'Não deu para enviar agora. Confira a internet e tente de novo.');
-      $('enviar').disabled = false; $('enviar').textContent = 'Enviar meu treino';
+$('b3').addEventListener('click', function () {
+  var texto = $('texto').value.trim(), b = this;
+  if (!fotos.length && texto.length < 10) return msg('m3', 'Envie uma foto do treino ou escreva o treino.');
+  b.disabled = true; b.textContent = 'Lendo o seu treino…'; msg('m3', ''); progresso('prog', 0.05);
+  var textos = [], cadeia = Promise.resolve(), worker = null;
+  if (fotos.length) {
+    cadeia = Tesseract.createWorker('por', 1, { logger: function (m) { if (m.status === 'recognizing text') progresso('prog', (textos.length + m.progress) / fotos.length); } })
+      .then(function (w) { worker = w; });
+    fotos.forEach(function (f) {
+      cadeia = cadeia.then(function () { return preparar(f); }).then(function (c) { return worker.recognize(c); })
+        .then(function (r) { textos.push(r.data.text); });
     });
+    cadeia = cadeia.then(function () { return worker.terminate(); });
+  }
+  cadeia.then(function () {
+    var lido = Leitor.ler(textos.concat([texto]).join('\n'));
+    b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true;
+    if (!lido.dias.length) return msg('m3', 'Não consegui encontrar exercícios. Tente uma foto mais reta e com mais luz, ou escreva o treino no campo acima.');
+    treino = lido; desenharTreino(); etapa(4);
+  }).catch(function (e) {
+    b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true;
+    msg('m3', 'Não deu para ler a foto agora (' + esc(e.message || e) + '). Você pode escrever o treino no campo acima.');
+  });
 });
+
+// 4. Conferir
+function opcoesGrupo(sel) {
+  return '<option value="">Grupo?</option>' + Object.keys(GRUPOS).map(function (g) { return '<option value="' + g + '"' + (g === sel ? ' selected' : '') + '>' + GRUPOS[g] + '</option>'; }).join('');
+}
+function desenharTreino() {
+  $('dias').innerHTML = treino.dias.map(function (d, i) {
+    return '<div class="dia" data-d="' + i + '"><div class="topo"><input type="text" value="' + esc(d.nome) + '" data-c="dia" aria-label="Nome do treino"><button class="x" type="button" data-a="tiraDia" aria-label="Remover treino">×</button></div>' +
+      '<div class="cab"><span>Grupo muscular</span><span>Tipo</span><span>Séries</span></div>' +
+      d.exercicios.map(function (e, j) {
+        return '<div class="ex' + (e.grupo ? '' : ' falta') + '" data-e="' + j + '"><div class="campos">' +
+          '<input type="text" value="' + esc(e.nome) + '" data-c="nome" list="banco" aria-label="Exercício">' +
+          '<select data-c="grupo" aria-label="Grupo muscular">' + opcoesGrupo(e.grupo) + '</select>' +
+          '<select data-c="tipo" aria-label="Tipo">' + ['A', 'B', 'C'].map(function (t) { return '<option' + (t === e.tipo ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>' +
+          '<input type="number" min="1" max="8" value="' + e.series + '" data-c="series" aria-label="Séries"></div>' +
+          '<button class="x" type="button" data-a="tiraEx" aria-label="Remover exercício">×</button>' +
+          (e.escrito && Leitor.normal(e.escrito).indexOf(Leitor.normal(e.nome)) < 0 ? '<small>Lido: "' + esc(e.escrito) + '"</small>' : '') + '</div>';
+      }).join('') + '<button class="mais" type="button" data-a="novoEx">+ Exercício</button></div>';
+  }).join('') + '<datalist id="banco">' + Leitor.BANCO.map(function (b) { return '<option value="' + esc(b[0]) + '">'; }).join('') + '</datalist>';
+}
+$('dias').addEventListener('change', function (e) {
+  var d = e.target.closest('.dia'), x = e.target.closest('.ex'), c = e.target.dataset.c;
+  if (!d || !c) return;
+  var dia = treino.dias[d.dataset.d];
+  if (c === 'dia') { dia.nome = e.target.value; return; }
+  var ex = dia.exercicios[x.dataset.e];
+  ex[c] = c === 'series' ? Number(e.target.value) || 3 : e.target.value;
+  if (c === 'nome') { var b = Leitor.reconhecer(e.target.value); if (b) { ex.grupo = b[1]; ex.tipo = b[2]; } desenharTreino(); }
+  if (c === 'grupo') x.classList.toggle('falta', !ex.grupo);
+});
+$('dias').addEventListener('click', function (e) {
+  var a = e.target.dataset.a; if (!a) return;
+  var d = e.target.closest('.dia');
+  if (a === 'tiraDia') treino.dias.splice(d.dataset.d, 1);
+  if (a === 'novoEx') treino.dias[d.dataset.d].exercicios.push({ nome: '', grupo: '', tipo: 'B', series: 3 });
+  if (a === 'tiraEx') treino.dias[d.dataset.d].exercicios.splice(e.target.closest('.ex').dataset.e, 1);
+  desenharTreino();
+});
+$('novoDia').addEventListener('click', function () {
+  treino.dias.push({ nome: 'Treino ' + String.fromCharCode(65 + treino.dias.length), exercicios: [{ nome: '', grupo: '', tipo: 'B', series: 3 }] });
+  desenharTreino();
+});
+
+// 5. Gerar
+$('b4').addEventListener('click', function () {
+  var b = this;
+  treino.dias = treino.dias.filter(function (d) { d.exercicios = d.exercicios.filter(function (e) { return e.nome.trim(); }); return d.exercicios.length; });
+  desenharTreino();
+  if (!treino.dias.length) return msg('m4', 'Coloque pelo menos um exercício.');
+  var semGrupo = 0; treino.dias.forEach(function (d) { d.exercicios.forEach(function (e) { if (!e.grupo) semGrupo++; }); });
+  if (semGrupo) return msg('m4', 'Escolha o grupo muscular dos exercícios marcados em vermelho.');
+  if (!$('aceite').checked) return msg('m4', 'Marque a caixa de conferência para gerar o plano.');
+  var dados = { nome: $('nome').value.trim(), frequencia: Number($('frequencia').value), prioritarios: prioridades(),
+    dias: treino.dias.map(function (d) { return { nome: d.nome, exercicios: d.exercicios.map(function (e) { return { nome: e.nome, grupo: e.grupo, tipo: e.tipo, series: e.series }; }) }; }) };
+  var plano;
+  try { plano = MDT.montarPlano(dados); } catch (err) { return msg('m4', esc(err.message)); }
+  b.disabled = true; b.textContent = 'Montando o seu plano…'; msg('m4', ''); progresso('prog4', 0.15);
+  PlanoPDF.desenharPlano(plano, $('render'));
+  PlanoPDF.gerarPdf($('render'), 1.6).then(function (pdf) {
+    pdfBase64 = pdf; progresso('prog4', 0.75); b.textContent = 'Enviando…';
+    return api({ acao: 'concluir', email: $('email').value.trim(), nome: dados.nome, frequencia: dados.frequencia,
+      prioritarios: dados.prioritarios, dores: $('dores').value.trim(), treino: dados, pdf: pdf });
+  }).then(function (r) {
+    b.disabled = false; b.textContent = 'Gerar meu plano'; $('prog4').hidden = true;
+    if (!r.ok) { if (r.usada) return etapa('usada'); return msg('m4', esc(r.erro)); }
+    var bytes = atob(pdfBase64), arr = new Uint8Array(bytes.length);
+    for (var i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+    $('baixar').href = URL.createObjectURL(new Blob([arr], { type: 'application/pdf' }));
+    $('baixar').download = 'Plano MDT - ' + dados.nome + '.pdf';
+    $('t5').textContent = 'O PDF também foi enviado para ' + $('email').value.trim() + '. Confira a caixa de spam se não aparecer.';
+    var paginas = $('render').querySelectorAll('.page');
+    $('previa').innerHTML = '';
+    [0, 2].forEach(function (k) {
+      if (!paginas[k]) return;
+      html2canvas(paginas[k], { scale: 0.5, backgroundColor: '#0c0c0d' }).then(function (c) { var im = new Image(); im.src = c.toDataURL('image/jpeg', 0.8); im.alt = ''; $('previa').appendChild(im); });
+    });
+    etapa(5);
+  }).catch(function (e) {
+    b.disabled = false; b.textContent = 'Gerar meu plano'; $('prog4').hidden = true;
+    msg('m4', 'Não deu para gerar agora. Confira a internet e tente de novo.');
+  });
+});
+
+// Compra já usada: reenviar
+$('bReenviar').addEventListener('click', function () {
+  var b = this; b.disabled = true;
+  api({ acao: 'reenviar', email: $('email').value.trim() }).then(function (r) {
+    b.disabled = false;
+    msg('mU', r.ok ? 'Pronto! O seu plano foi enviado de novo para ' + esc($('email').value.trim()) + '.' : esc(r.erro), r.ok ? 'ok' : 'err');
+  }).catch(function () { b.disabled = false; msg('mU', 'Não deu para enviar agora. Tente de novo.'); });
+});
+
+etapa(1);
 </script>
 </body>
 </html>
