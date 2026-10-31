@@ -97,13 +97,13 @@ var PlanoPDF = (function () {
   }
 
   // Cada folha vira uma imagem numa página A4 do PDF.
-  function gerarPdf(raiz) {
+  function gerarPdf(raiz, escala) {
     var paginas = Array.prototype.slice.call(raiz.querySelectorAll('.page'));
     var pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', compress: true });
     var cadeia = (document.fonts && document.fonts.ready) || Promise.resolve();
     paginas.forEach(function (p, i) {
       cadeia = cadeia.then(function () {
-        return html2canvas(p, { scale: 2, backgroundColor: '#0c0c0d', useCORS: true, logging: false });
+        return html2canvas(p, { scale: escala || 2, backgroundColor: '#0c0c0d', useCORS: true, logging: false });
       }).then(function (canvas) {
         if (i > 0) pdf.addPage();
         pdf.addImage(canvas.toDataURL('image/jpeg', 0.86), 'JPEG', 0, 0, 210, 297);
