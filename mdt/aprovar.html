@@ -126,7 +126,7 @@ function prioridades() { return Array.prototype.map.call(document.querySelectorA
 function carregar(p) {
   pedido = p;
   $('titulo').textContent = p.nome;
-  $('dados').innerHTML = '<dt>E-mail</dt><dd>' + esc(p.email) + '</dd><dt>Enviado em</dt><dd>' + esc(p.data) + '</dd><dt>Status</dt><dd>' + esc(p.status) + '</dd>' +
+  $('dados').innerHTML = '<dt>E-mail</dt><dd>' + esc(p.email) + '</dd><dt>Enviado em</dt><dd>' + esc(isNaN(Date.parse(p.data)) ? p.data : new Date(p.data).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })) + '</dd><dt>Status</dt><dd>' + esc(p.status) + '</dd>' +
     (p.dores ? '<dt>Dor/limitação</dt><dd>' + esc(p.dores) + '</dd>' : '') + (p.texto ? '<dt>Escreveu</dt><dd style="white-space:pre-wrap">' + esc(p.texto) + '</dd>' : '') +
     (p.treino && p.treino.observacoes ? '<dt>Leitura</dt><dd>' + esc(p.treino.observacoes) + '</dd>' : '');
   $('fotos').innerHTML = (p.arquivos || []).map(function (a) { return '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.nome) + '</a>'; }).join('');
