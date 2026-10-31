@@ -1,0 +1,53 @@
+/* Visual do PDF do plano (mesmo branding do e-book). Cada .page é uma folha A4. */
+.plano{--bg:#0c0c0d;--panel:#151517;--panel2:#1b1b1e;--line:#2a2a2e;--gold:#c9a24a;--gold2:#e8cf8a;--goldd:#7d6326;--text:#ecebe8;--muted:#a3a19b;--red:#d0665b;--green:#8fbf74;
+  color:var(--text);font-family:'Inter',Arial,sans-serif;font-size:10pt;line-height:1.45}
+.plano *{box-sizing:border-box}
+.plano .page{width:794px;height:1123px;padding:60px 57px 68px;position:relative;overflow:hidden;background:var(--bg);margin:0 auto}
+.plano .body{height:100%}
+.plano .foot{position:absolute;bottom:26px;left:57px;right:57px;display:flex;justify-content:space-between;font-size:7.3pt;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;letter-spacing:.08em;text-transform:uppercase}
+.plano .foot b{color:var(--gold)}
+.plano h1,.plano h2,.plano h3,.plano h4{font-family:'Oswald',Impact,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.02em;margin:0}
+.plano .g{color:var(--gold)}
+.plano .kicker{color:var(--gold);font-size:8pt;letter-spacing:.28em;text-transform:uppercase;font-weight:700}
+.plano h2{font-size:24pt;line-height:1.05;margin:6px 0 11px}
+.plano h3{font-size:12.5pt;margin:0 0 6px}
+.plano h4{font-size:9.8pt;letter-spacing:.06em;color:var(--gold2);margin:0 0 6px}
+.plano p{margin:0 0 9px}
+.plano .muted{color:var(--muted)}.plano .small{font-size:8.6pt}
+.plano .card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:15px 17px}
+.plano .card.gold{border-color:var(--goldd);background:linear-gradient(160deg,#1d1a12,#151517 60%)}
+.plano .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.plano .grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.plano .mt{margin-top:17px}
+.plano table{width:100%;border-collapse:collapse;font-size:9pt}
+.plano th{background:var(--gold);color:#121212;text-align:left;padding:6px 9px;font-weight:700;text-transform:uppercase;font-size:7.2pt;letter-spacing:.06em}
+.plano td{padding:6px 9px;border-bottom:1px solid var(--line)}
+.plano tr:nth-child(even) td{background:#111113}
+.plano .c{text-align:center}
+.plano .tag{display:inline-block;border:1px solid var(--goldd);color:var(--gold2);border-radius:4px;padding:0 6px;font-size:7.4pt;font-weight:700}
+.plano .novo{color:var(--green);font-size:7.2pt;font-weight:700;margin-left:6px}
+.plano ul.clean{list-style:none;padding:0;margin:0}
+.plano ul.clean li{position:relative;padding-left:19px;margin-bottom:5px;font-size:9pt}
+.plano ul.clean li:before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;background:var(--gold);transform:rotate(45deg)}
+/* capa */
+.plano .cover{padding:0;background:#09090a url(../img/capa-plano.jpg) 0 0/100% 100% no-repeat}
+.plano .cover .frame{position:absolute;inset:38px;border:1px solid rgba(201,162,74,.35)}
+.plano .cover .content{position:absolute;left:83px;right:83px;bottom:128px}
+.plano .cover h1{font-size:56pt;line-height:.92}
+.plano .cover .name{font-family:'Oswald';font-size:18pt;text-transform:uppercase;color:var(--gold);margin-top:15px;letter-spacing:.04em}
+.plano .cover .meta{display:flex;gap:23px;margin-top:26px;font-size:9.5pt}
+.plano .cover .meta div{border-left:2px solid var(--gold);padding-left:11px}
+.plano .cover .meta b{display:block;font-family:'Oswald';font-size:13pt;color:var(--text);font-weight:600}
+.plano .cover .by{position:absolute;left:83px;bottom:68px;font-size:8.5pt;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+/* semana */
+.plano .weekhead{display:flex;justify-content:space-between;align-items:flex-end;gap:23px}
+.plano .wnum{font-family:'Oswald';font-weight:700;font-size:44pt;line-height:.85;color:rgba(201,162,74,.28)}
+.plano .repsbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.plano .repsbar span{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:8.6pt}
+.plano .repsbar b{color:var(--gold)}
+.plano .day{margin-top:17px}
+.plano .day h3{display:flex;justify-content:space-between;align-items:baseline}
+.plano .day h3 small{font-family:'Inter';font-size:8pt;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400}
+.plano .ci td:first-child{width:34px;font-family:'Oswald';font-size:13pt;text-align:center}
+.plano .ok{color:var(--green)}.plano .n{color:var(--gold)}.plano .stop{color:var(--red)}
+.plano .btn{display:inline-block;background:var(--gold);color:#121212;font-weight:800;text-decoration:none;padding:13px 30px;border-radius:7px;letter-spacing:.06em;text-transform:uppercase;font-size:9.5pt}
