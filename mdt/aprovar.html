@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Aprovar plano · MDT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="css/plano.css" rel="stylesheet">
+<script src="config.js"></script>
+<script src="js/mdt.js"></script>
+<script src="js/plano-pdf.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{--bg:#0b0b0c;--panel:#151517;--line:#2c2b29;--gold:#c9a24a;--gold2:#e8cf8a;--text:#ecebe8;--muted:#a3a19b;--red:#e07a6f;--green:#8fbf74;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 'Inter',system-ui,Arial,sans-serif}
+.app{display:grid;grid-template-columns:minmax(380px,520px) 1fr;min-height:100vh}
+.lado{border-right:1px solid var(--line);padding:20px;overflow:auto;max-height:100vh;position:sticky;top:0}
+.previa{padding:20px;overflow:auto;background:#060606}
+.previa .plano .page{margin-bottom:16px;box-shadow:0 0 0 1px #222}
+h1,h2{font-family:'Oswald',Impact,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin:0}
+h1{font-size:24px}h2{font-size:15px;color:var(--gold2);margin:18px 0 8px}
+.kicker{color:var(--gold);font-size:11px;letter-spacing:.24em;text-transform:uppercase;font-weight:700}
+.dados{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:10px;font-size:13px}
+.dados dt{color:var(--muted)}.dados dd{margin:0}
+.fotos{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.fotos a{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--gold2);text-decoration:none}
+input,select{background:#0f0f10;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:5px 6px;font:13px 'Inter',sans-serif;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--gold2);outline-offset:1px}
+.linha{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.dia{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px;background:var(--panel)}
+.dia .topo{display:flex;gap:6px;margin-bottom:6px}
+.dia .topo input{flex:1;font-weight:700}
+.ex{display:grid;grid-template-columns:1fr 112px 48px 48px 26px;gap:4px;margin-bottom:4px}
+.ex.cab{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+button{font:600 13px 'Inter',sans-serif;border-radius:7px;border:1px solid var(--line);background:#1b1b1e;color:var(--text);padding:6px 10px;cursor:pointer}
+button.x{padding:0;width:26px;color:var(--muted)}
+button.pri{background:var(--gold);color:#121212;border:0;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:12px 16px}
+button[disabled]{opacity:.5;cursor:default}
+.chips label{display:inline-flex;gap:4px;align-items:center;margin:0 10px 4px 0;font-size:13px}
+.chips input{accent-color:var(--gold)}
+.acoes{position:sticky;bottom:0;background:var(--bg);padding:12px 0 4px;border-top:1px solid var(--line);margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.msg{border-radius:8px;padding:10px 12px;margin-top:10px;font-size:13px}
+.msg.err{background:#2a1716;border:1px solid #5a2a26;color:#f3b4ac}
+.msg.ok{background:#16200f;border:1px solid #33502a;color:#cfe8bf}
+.aviso{font-size:12.5px;color:var(--muted)}
+@media (max-width:900px){.app{grid-template-columns:1fr}.lado{position:static;max-height:none;border-right:0}.previa{zoom:.5}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="lado">
+    <div class="kicker">Aprovação do plano</div>
+    <h1 id="titulo">Carregando…</h1>
+    <dl class="dados" id="dados"></dl>
+    <div class="fotos" id="fotos"></div>
+    <div id="msg"></div>
+
+    <h2>Rotina</h2>
+    <div class="linha"><label for="freq">Treinos por semana</label><select id="freq"></select></div>
+    <div class="aviso">Prioritários (1 ou 2):</div>
+    <div class="chips" id="prio"></div>
+
+    <h2>Treino lido</h2>
+    <p class="aviso" style="margin-top:0">Confira o que foi lido das fotos e corrija o que precisar. A prévia ao lado atualiza sozinha.</p>
+    <div id="dias"></div>
+    <button type="button" id="novoDia">+ Treino</button>
+
+    <div class="acoes">
+      <button class="pri" type="button" id="aprovar">Aprovar e enviar o PDF</button>
+      <button type="button" id="reler">Ler as fotos de novo</button>
+    </div>
+  </div>
+  <div class="previa"><div id="doc"></div></div>
+</div>
+
+<script>
+var GRUPOS = MDT.GRUPOS, $ = function (id) { return document.getElementById(id); };
+var q = new URLSearchParams(location.search), ID = q.get('id'), K = q.get('k');
+var pedido = null, plano = null;
+
+function msg(t, tipo) { $('msg').innerHTML = t ? '<div class="msg ' + (tipo || 'err') + '">' + t + '</div>' : ''; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+function api(params) {
+  if (params.acao === 'pedido') {
+    return fetch(URL_SCRIPT + '?' + new URLSearchParams(params)).then(function (r) { return r.json(); });
+  }
+  return fetch(URL_SCRIPT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(params) })
+    .then(function (r) { return r.json(); });
+}
+
+function opcoesGrupo(sel) {
+  return Object.keys(GRUPOS).concat(['outro']).map(function (g) {
+    return '<option value="' + g + '"' + (g === sel ? ' selected' : '') + '>' + (GRUPOS[g] || 'Outro') + '</option>';
+  }).join('');
+}
+
+function desenharEditor() {
+  var t = pedido.treino || { dias: [] };
+  $('dias').innerHTML = t.dias.map(function (d, i) {
+    return '<div class="dia" data-d="' + i + '"><div class="topo"><input value="' + esc(d.nome) + '" data-campo="dia" aria-label="Nome do treino">' +
+      '<button type="button" class="x" data-acao="tiraDia" aria-label="Remover treino">×</button></div>' +
+      '<div class="ex cab"><span>Exercício</span><span>Grupo</span><span>Tipo</span><span>Séries</span><span></span></div>' +
+      d.exercicios.map(function (e, j) {
+        return '<div class="ex" data-e="' + j + '"><input value="' + esc(e.nome) + '" data-campo="nome" aria-label="Exercício">' +
+          '<select data-campo="grupo" aria-label="Grupo">' + opcoesGrupo(e.grupo) + '</select>' +
+          '<select data-campo="tipo" aria-label="Tipo">' + ['A', 'B', 'C'].map(function (x) { return '<option' + (x === e.tipo ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select>' +
+          '<input type="number" min="1" max="8" value="' + e.series + '" data-campo="series" aria-label="Séries">' +
+          '<button type="button" class="x" data-acao="tiraEx" aria-label="Remover exercício">×</button></div>';
+      }).join('') + '<button type="button" data-acao="novoEx">+ Exercício</button></div>';
+  }).join('');
+}
+
+function atualizarPrevia() {
+  try {
+    plano = MDT.montarPlano({ nome: pedido.nome, frequencia: Number($('freq').value), prioritarios: prioridades(), dias: (pedido.treino || {}).dias || [] });
+    PlanoPDF.desenharPlano(plano, $('doc'));
+    $('aprovar').disabled = false;
+  } catch (e) { $('doc').innerHTML = '<p style="color:#f3b4ac">' + esc(e.message) + '</p>'; plano = null; $('aprovar').disabled = true; }
+}
+function prioridades() { return Array.prototype.map.call(document.querySelectorAll('#prio input:checked'), function (i) { return i.value; }); }
+
+function carregar(p) {
+  pedido = p;
+  $('titulo').textContent = p.nome;
+  $('dados').innerHTML = '<dt>E-mail</dt><dd>' + esc(p.email) + '</dd><dt>Enviado em</dt><dd>' + esc(p.data) + '</dd><dt>Status</dt><dd>' + esc(p.status) + '</dd>' +
+    (p.dores ? '<dt>Dor/limitação</dt><dd>' + esc(p.dores) + '</dd>' : '') + (p.texto ? '<dt>Escreveu</dt><dd style="white-space:pre-wrap">' + esc(p.texto) + '</dd>' : '') +
+    (p.treino && p.treino.observacoes ? '<dt>Leitura</dt><dd>' + esc(p.treino.observacoes) + '</dd>' : '');
+  $('fotos').innerHTML = (p.arquivos || []).map(function (a) { return '<a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.nome) + '</a>'; }).join('');
+  $('freq').innerHTML = [1, 2, 3, 4, 5, 6, 7].map(function (n) { return '<option' + (String(n) === String(p.frequencia) ? ' selected' : '') + '>' + n + '</option>'; }).join('');
+  $('prio').innerHTML = Object.keys(GRUPOS).map(function (g) {
+    return '<label><input type="checkbox" value="' + g + '"' + ((p.prioritarios || []).indexOf(g) >= 0 ? ' checked' : '') + '>' + GRUPOS[g] + '</label>';
+  }).join('');
+  if (!p.treino || !p.treino.dias || !p.treino.dias.length) {
+    p.treino = { dias: [{ nome: 'Treino A', exercicios: [{ nome: '', grupo: 'peito', tipo: 'A', series: 3 }] }] };
+    msg('Não deu para ler o treino automaticamente. Preencha à mão olhando as fotos acima, ou clique em "Ler as fotos de novo".');
+  }
+  if (p.status === 'enviado') msg('Este plano já foi enviado para o aluno. Se aprovar de novo, ele recebe outro e-mail.', 'ok');
+  desenharEditor(); atualizarPrevia();
+}
+
+// Edição do treino
+$('dias').addEventListener('input', function (e) {
+  var d = e.target.closest('.dia'), x = e.target.closest('.ex'), campo = e.target.dataset.campo;
+  if (!d || !campo) return;
+  var dia = pedido.treino.dias[d.dataset.d];
+  if (campo === 'dia') dia.nome = e.target.value;
+  else if (x) dia.exercicios[x.dataset.e][campo] = campo === 'series' ? Number(e.target.value) : e.target.value;
+  clearTimeout(window._t); window._t = setTimeout(atualizarPrevia, 350);
+});
+$('dias').addEventListener('click', function (e) {
+  var acao = e.target.dataset.acao; if (!acao) return;
+  var d = e.target.closest('.dia'), dias = pedido.treino.dias;
+  if (acao === 'tiraDia') dias.splice(d.dataset.d, 1);
+  if (acao === 'novoEx') dias[d.dataset.d].exercicios.push({ nome: '', grupo: 'peito', tipo: 'B', series: 3 });
+  if (acao === 'tiraEx') dias[d.dataset.d].exercicios.splice(e.target.closest('.ex').dataset.e, 1);
+  desenharEditor(); atualizarPrevia();
+});
+$('novoDia').addEventListener('click', function () {
+  pedido.treino.dias.push({ nome: 'Treino ' + String.fromCharCode(65 + pedido.treino.dias.length), exercicios: [{ nome: '', grupo: 'peito', tipo: 'B', series: 3 }] });
+  desenharEditor(); atualizarPrevia();
+});
+$('freq').addEventListener('change', atualizarPrevia);
+$('prio').addEventListener('change', function (e) {
+  if (prioridades().length > 2) e.target.checked = false;
+  atualizarPrevia();
+});
+
+$('reler').addEventListener('click', function () {
+  if (!ID) return msg('No modo de teste não há fotos para ler.');
+  this.disabled = true; msg('Lendo as fotos de novo…', 'ok');
+  var b = this;
+  api({ acao: 'reler', id: ID, k: K }).then(function (r) {
+    b.disabled = false;
+    if (!r.ok) throw new Error(r.erro);
+    pedido.treino = r.treino; msg('Leitura atualizada.', 'ok'); desenharEditor(); atualizarPrevia();
+  }).catch(function (e) { b.disabled = false; msg(esc(e.message || 'Não deu para ler agora.')); });
+});
+
+$('aprovar').addEventListener('click', function () {
+  if (!plano) return;
+  var b = this; b.disabled = true; b.textContent = 'Gerando o PDF…'; msg('');
+  PlanoPDF.gerarPdf($('doc')).then(function (pdf) {
+    if (!ID) {
+      var a = document.createElement('a'); a.href = 'data:application/pdf;base64,' + pdf; a.download = 'Plano MDT - teste.pdf'; a.click();
+      return { ok: true, teste: true };
+    }
+    b.textContent = 'Enviando…';
+    return api({ acao: 'aprovar', id: ID, k: K, pdf: pdf, treino: pedido.treino, frequencia: $('freq').value, prioritarios: prioridades() });
+  }).then(function (r) {
+    if (!r.ok) throw new Error(r.erro);
+    msg(r.teste ? 'PDF de teste gerado.' : 'Plano enviado para ' + esc(pedido.email) + '.', 'ok');
+    b.textContent = 'Enviado'; if (r.teste) { b.disabled = false; b.textContent = 'Aprovar e enviar o PDF'; }
+  }).catch(function (e) { b.disabled = false; b.textContent = 'Aprovar e enviar o PDF'; msg(esc(e.message || 'Não deu para enviar.')); });
+});
+
+// Início: modo de teste (?teste=1) usa um treino de exemplo; o normal busca o pedido no Apps Script.
+if (!ID) {
+  carregar({ nome: 'Aluno Exemplo', email: 'aluno@exemplo.com', data: 'agora', status: 'teste', frequencia: 4, prioritarios: ['peito'], dores: '', texto: '',
+    treino: { observacoes: 'Treino de exemplo para testar a tela.', dias: [
+      { nome: 'Treino A', exercicios: [{ nome: 'Supino inclinado com halter', grupo: 'peito', tipo: 'A', series: 4 }, { nome: 'Crucifixo na polia', grupo: 'peito', tipo: 'C', series: 3 },
+        { nome: 'Desenvolvimento com halter', grupo: 'ombro', tipo: 'A', series: 3 }, { nome: 'Tríceps corda', grupo: 'triceps', tipo: 'C', series: 3 }] },
+      { nome: 'Treino B', exercicios: [{ nome: 'Puxada alta', grupo: 'costas', tipo: 'A', series: 4 }, { nome: 'Remada baixa', grupo: 'costas', tipo: 'B', series: 3 },
+        { nome: 'Rosca direta', grupo: 'biceps', tipo: 'C', series: 3 }, { nome: 'Leg press', grupo: 'quadriceps', tipo: 'A', series: 4 }, { nome: 'Mesa flexora', grupo: 'posterior', tipo: 'B', series: 3 }] }] } });
+} else {
+  api({ acao: 'pedido', id: ID, k: K }).then(function (r) {
+    if (!r.ok) throw new Error(r.erro);
+    carregar(r.pedido);
+  }).catch(function (e) { $('titulo').textContent = 'Não abriu'; msg(esc(e.message || 'Confira o link do e-mail.')); });
+}
+</script>
+</body>
+</html>

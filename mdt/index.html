@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Monte o seu treino · MDT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+:root{--bg:#0b0b0c;--panel:#151517;--panel2:#1b1b1e;--line:#2c2b29;--gold:#c9a24a;--gold2:#e8cf8a;--text:#ecebe8;--muted:#a3a19b;--red:#e07a6f;--green:#8fbf74;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 'Inter',system-ui,Arial,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding-block:28px 60px;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+h1,h2{font-family:'Oswald',Impact,sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:.02em;margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,8vw,42px);line-height:1}
+h1 .g{color:var(--gold)}
+h2{font-size:18px;letter-spacing:.04em;color:var(--gold2);margin-bottom:12px}
+.kicker{color:var(--gold);font-size:12px;letter-spacing:.24em;text-transform:uppercase;font-weight:700}
+.lead{color:#d6d3cb;margin:12px 0 0}
+.steps{display:flex;gap:8px;margin:20px 0 4px;flex-wrap:wrap}
+.steps span{font-size:13px;border:1px solid var(--line);border-radius:20px;padding:5px 12px;color:var(--muted)}
+.steps b{color:var(--gold)}
+form{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+fieldset{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:18px;margin:0;min-width:0}
+legend{padding:0 6px;font-family:'Oswald';text-transform:uppercase;letter-spacing:.06em;color:var(--gold2)}
+label{display:block;font-size:14px;font-weight:600;margin:0 0 6px}
+.field{margin-bottom:14px}.field:last-child{margin-bottom:0}
+.hint{font-size:13px;color:var(--muted);font-weight:400;margin-top:4px}
+input[type=text],input[type=email],select,textarea{width:100%;background:#0f0f10;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px 12px;font:16px 'Inter',sans-serif}
+textarea{min-height:110px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,.chip:focus-within{outline:2px solid var(--gold2);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.chip span{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:7px 13px;font-size:14px;color:var(--muted);background:#0f0f10}
+.chip input:checked+span{border-color:var(--gold);color:#121212;background:var(--gold);font-weight:700}
+.drop{border:1.5px dashed #5a4a22;border-radius:10px;padding:20px;text-align:center;background:#16140f;cursor:pointer}
+.drop b{color:var(--gold)}
+.drop input{display:none}
+.files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.files div{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#0f0f10;font-size:11px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px;color:var(--muted)}
+.files img{width:100%;height:100%;object-fit:cover}
+.files button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;cursor:pointer;font-size:13px;line-height:22px;padding:0}
+.ou{text-align:center;color:var(--muted);font-size:13px;margin:12px 0}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#d6d3cb;font-weight:400}
+.check input{margin-top:3px;accent-color:var(--gold);width:18px;height:18px;flex:none}
+.send{background:var(--gold);color:#121212;border:0;border-radius:10px;padding:15px;font:800 15px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.send[disabled]{opacity:.5;cursor:default}
+.msg{border-radius:10px;padding:14px 16px;font-size:14.5px}
+.msg.err{background:#2a1716;border:1px solid #5a2a26;color:#f3b4ac}
+.msg.ok{background:#16200f;border:1px solid #33502a;color:#cfe8bf}
+.done{text-align:center;padding:40px 10px}
+.done h1{margin:14px 0}
+.foot{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;letter-spacing:.2em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="tela-form">
+    <div class="kicker">MDT · Método Destrava Treino</div>
+    <h1 style="margin-top:10px">Monte o seu <span class="g">treino</span></h1>
+    <p class="lead">Envie o treino que você faz hoje e receba as suas 4 semanas adaptadas ao método, em PDF, no seu e-mail.</p>
+    <div class="steps"><span><b>1</b> Envie o treino</span><span><b>2</b> O plano é montado</span><span><b>3</b> Chega no seu e-mail</span></div>
+
+    <form id="form" novalidate>
+      <fieldset>
+        <legend>Seus dados</legend>
+        <div class="field"><label for="nome">Nome</label><input type="text" id="nome" autocomplete="name" required></div>
+        <div class="field"><label for="email">E-mail</label><input type="email" id="email" autocomplete="email" required><div class="hint">É para onde o seu plano vai ser enviado.</div></div>
+        <div class="field"><label for="codigo">Código de acesso</label><input type="text" id="codigo" autocomplete="off" required><div class="hint">Está na página 2 do seu e-book.</div></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Sua rotina</legend>
+        <div class="field"><label for="frequencia">Quantas vezes por semana você treina musculação?</label>
+          <select id="frequencia" required><option value="">Escolha</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+        <div class="field"><label>O que você mais quer evoluir? <span class="hint" style="display:inline">(escolha 1 ou 2)</span></label>
+          <div class="chips" id="prioridades"></div></div>
+        <div class="field"><label for="dores">Tem alguma dor ou limitação? <span class="hint" style="display:inline">(opcional)</span></label>
+          <input type="text" id="dores" placeholder="Ex.: dor no ombro direito no supino"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Seu treino atual</legend>
+        <p class="hint" style="margin:0 0 12px">Mande do jeito que for mais fácil: foto da ficha, print do app, PDF ou escrito. Serve qualquer divisão (full body, AB, ABC…).</p>
+        <label class="drop" for="arquivos"><b>Toque para enviar fotos ou arquivos</b><br><span class="hint">Até 6 arquivos: fotos, prints ou PDF</span>
+          <input type="file" id="arquivos" multiple accept="image/*,application/pdf,.txt"></label>
+        <div class="files" id="lista"></div>
+        <div class="ou">ou</div>
+        <label for="texto">Escreva o seu treino</label>
+        <textarea id="texto" placeholder="Treino A: supino inclinado 4x10, crucifixo 3x12…&#10;Treino B: puxada alta 4x10…"></textarea>
+      </fieldset>
+
+      <label class="check"><input type="checkbox" id="aceite" required><span>Concordo em enviar estes dados para a montagem do meu plano. As informações são usadas só para isso e o treino é lido por uma ferramenta automática.</span></label>
+      <div id="erro" class="msg err" hidden></div>
+      <button class="send" type="submit" id="enviar">Enviar meu treino</button>
+    </form>
+  </div>
+
+  <div id="tela-ok" class="done" hidden>
+    <div class="kicker">Recebido</div>
+    <h1>Seu treino <span class="g" style="color:var(--gold)">chegou</span></h1>
+    <p class="lead">O seu plano das 4 semanas vai chegar no e-mail <b id="ok-email"></b>. Confira também a caixa de spam.</p>
+    <p class="hint">Protocolo: <span id="ok-id"></span></p>
+  </div>
+  <div class="foot">Luis Pietchaki · Coach</div>
+</div>
+
+<script>
+var GRUPOS = [['peito','Peito'],['costas','Costas'],['ombro','Ombro'],['biceps','Bíceps'],['triceps','Tríceps'],['quadriceps','Quadríceps'],['posterior','Posterior de coxa'],['gluteos','Glúteos'],['panturrilha','Panturrilha'],['abdomen','Abdômen']];
+var arquivos = [];
+var $ = function (id) { return document.getElementById(id); };
+
+$('prioridades').innerHTML = GRUPOS.map(function (g) {
+  return '<label class="chip"><input type="checkbox" name="prio" value="' + g[0] + '"><span>' + g[1] + '</span></label>';
+}).join('');
+$('prioridades').addEventListener('change', function (e) {
+  var marcados = document.querySelectorAll('input[name=prio]:checked');
+  if (marcados.length > 2) e.target.checked = false;
+});
+
+// Fotos são reduzidas antes do envio (cabe melhor e chega mais rápido).
+function reduzir(file) {
+  return new Promise(function (ok, falha) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var max = 1600, w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+      var c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      ok({ nome: file.name.replace(/\.[^.]+$/, '') + '.jpg', tipo: 'image/jpeg', dados: c.toDataURL('image/jpeg', 0.82).split(',')[1], previa: c.toDataURL('image/jpeg', 0.5) });
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); falha(new Error('Não consegui abrir a imagem ' + file.name + '.')); };
+    img.src = url;
+  });
+}
+function lerArquivo(file) {
+  return new Promise(function (ok, falha) {
+    var r = new FileReader();
+    r.onload = function () { ok({ nome: file.name, tipo: file.type || 'text/plain', dados: String(r.result).split(',')[1] }); };
+    r.onerror = function () { falha(new Error('Não consegui ler ' + file.name + '.')); };
+    r.readAsDataURL(file);
+  });
+}
+function mostrarArquivos() {
+  $('lista').innerHTML = arquivos.map(function (a, i) {
+    return '<div>' + (a.previa ? '<img src="' + a.previa + '" alt="">' : a.nome) + '<button type="button" data-i="' + i + '" aria-label="Remover">×</button></div>';
+  }).join('');
+}
+$('lista').addEventListener('click', function (e) {
+  if (e.target.dataset.i) { arquivos.splice(Number(e.target.dataset.i), 1); mostrarArquivos(); }
+});
+$('arquivos').addEventListener('change', function () {
+  var novos = Array.prototype.slice.call(this.files).slice(0, 6 - arquivos.length);
+  Promise.all(novos.map(function (f) {
+    if (f.size > 15 * 1024 * 1024) return Promise.reject(new Error(f.name + ' é grande demais (máximo 15 MB).'));
+    return /^image\//.test(f.type) ? reduzir(f) : lerArquivo(f);
+  })).then(function (lista) { arquivos = arquivos.concat(lista); mostrarArquivos(); erro(''); })
+    .catch(function (e) { erro(e.message); });
+  this.value = '';
+});
+
+function erro(t) { $('erro').textContent = t; $('erro').hidden = !t; }
+
+$('form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var prio = Array.prototype.map.call(document.querySelectorAll('input[name=prio]:checked'), function (i) { return i.value; });
+  var dados = {
+    acao: 'enviar', nome: $('nome').value.trim(), email: $('email').value.trim(), codigo: $('codigo').value.trim(),
+    frequencia: $('frequencia').value, prioritarios: prio, dores: $('dores').value.trim(), texto: $('texto').value.trim(),
+    arquivos: arquivos.map(function (a) { return { nome: a.nome, tipo: a.tipo, dados: a.dados }; })
+  };
+  if (!dados.nome) return erro('Escreva o seu nome.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(dados.email)) return erro('Confira o seu e-mail.');
+  if (!dados.codigo) return erro('Coloque o código de acesso que está no e-book.');
+  if (!dados.frequencia) return erro('Escolha quantas vezes por semana você treina.');
+  if (!prio.length) return erro('Escolha pelo menos 1 grupo que você mais quer evoluir.');
+  if (!dados.arquivos.length && dados.texto.length < 15) return erro('Envie uma foto ou arquivo do treino, ou escreva o treino.');
+  if (!$('aceite').checked) return erro('Marque a caixa de concordância para enviar.');
+  if (!/^https:\/\//.test(URL_SCRIPT)) return erro('Esta página ainda está em teste: o envio não está ligado.');
+
+  erro(''); $('enviar').disabled = true; $('enviar').textContent = 'Enviando…';
+  fetch(URL_SCRIPT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(dados) })
+    .then(function (r) { return r.json(); })
+    .then(function (r) {
+      if (!r.ok) throw new Error(r.erro || 'Não deu para enviar agora. Tente de novo.');
+      $('ok-email').textContent = dados.email; $('ok-id').textContent = r.id;
+      $('tela-form').hidden = true; $('tela-ok').hidden = false; window.scrollTo(0, 0);
+    })
+    .catch(function (e) {
+      erro(e.message && e.message !== 'Failed to fetch' ? e.message : 'Não deu para enviar agora. Confira a internet e tente de novo.');
+      $('enviar').disabled = false; $('enviar').textContent = 'Enviar meu treino';
+    });
+});
+</script>
+</body>
+</html>
