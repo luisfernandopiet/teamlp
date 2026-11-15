@@ -48,10 +48,26 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .fotos div{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
 .fotos img{width:100%;height:100%;object-fit:cover}
 .fotos button{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.75);color:#fff;cursor:pointer;font-size:13px;line-height:22px;padding:0}
+.fotos div.boa{border:2px solid var(--green)}
+.fotos div.ruim{border:2px solid var(--red)}
+.fotos div.ruim img{opacity:.45}
+.fotos span{position:absolute;left:0;right:0;bottom:0;font-size:10.5px;font-weight:700;text-align:center;padding:2px 0;background:rgba(0,0,0,.75)}
+.fotos div.boa span{color:var(--green)}
+.fotos div.ruim span{color:var(--red)}
+.resumo{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:14px}
+.resumo .mini{display:flex;gap:6px;flex-wrap:wrap;flex:none;max-width:45%}
+.resumo .mini a{display:block;width:58px;height:58px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.resumo .mini img{width:100%;height:100%;object-fit:cover}
+.resumo p{margin:0;font-size:14px}
+.confirma{border:1.5px solid var(--gold);border-radius:12px;padding:16px;margin-top:14px;background:#1e1a10}
+.confirma[hidden]{display:none}
+.confirma ul{margin:8px 0 12px;padding-left:18px;font-size:14px}
+.confirma .aviso{font-size:14px;color:var(--gold2);margin:0 0 6px}
 .ou{text-align:center;color:var(--muted);font-size:13px;margin:12px 0}
 .btn{display:block;width:100%;background:var(--gold);color:#121212;border:0;border-radius:10px;padding:15px;font:800 15px 'Inter',sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;text-align:center;text-decoration:none;margin-top:6px}
 .btn.sec{background:transparent;color:var(--gold2);border:1px solid var(--goldd,#7d6326)}
 .btn[disabled]{opacity:.5;cursor:default}
+.btn[hidden]{display:none}
 .msg{border-radius:10px;padding:13px 15px;font-size:14.5px;margin-top:12px}
 .msg.err{background:#2a1716;border:1px solid #5a2a26;color:#f3b4ac}
 .msg.ok{background:#16200f;border:1px solid #33502a;color:#cfe8bf}
@@ -125,13 +141,22 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
   <!-- 4. Conferir -->
   <section class="etapa" id="e4" hidden>
     <h2>Confira o seu treino</h2>
-    <p class="hint">Veja se está tudo certo e corrija o que precisar. Exercícios com o grupo em vermelho precisam que você escolha o músculo principal.</p>
+    <div class="resumo" id="resumo"></div>
+    <p class="hint">Compare com a sua foto, exercício por exercício, e corrija o que precisar. Exercícios com o grupo em vermelho precisam que você escolha o músculo principal.</p>
     <div id="dias"></div>
     <button class="mais" id="novoDia" type="button">+ Treino</button>
-    <label class="check" style="margin-top:16px"><input type="checkbox" id="aceite"><span>Conferi o meu treino. Sei que cada compra gera um plano.</span></label>
-    <button class="btn" id="b4" type="button" style="margin-top:12px">Gerar meu plano</button>
-    <div class="prog" id="prog4" hidden><i></i></div>
+    <label class="check" style="margin-top:16px"><input type="checkbox" id="aceite"><span>Conferi exercício por exercício: este é o treino que eu faço hoje.</span></label>
+    <button class="btn" id="b4" type="button" style="margin-top:12px">Continuar</button>
     <div id="m4"></div>
+    <div class="confirma" id="confirma" hidden>
+      <h2>Este é o seu treino?</h2>
+      <ul id="confLista"></ul>
+      <p class="aviso"><b>A sua compra dá direito a 1 ajuste de treino.</b> Ao confirmar, o seu plano é montado com este treino e não dá para refazer.</p>
+      <button class="btn" id="bConfirma" type="button">Sim, montar o meu plano</button>
+      <button class="btn sec" id="bVolta" type="button">Voltar e corrigir</button>
+      <div class="prog" id="prog4" hidden><i></i></div>
+      <div id="m5"></div>
+    </div>
   </section>
 
   <!-- 5. Plano -->
@@ -205,14 +230,18 @@ $('arquivos').addEventListener('change', function () {
   Array.prototype.slice.call(this.files, 0, 6 - fotos.length).forEach(function (f) {
     var url = URL.createObjectURL(f); fotos.push({ arquivo: f, url: url }); mostrarFotos();
   });
-  this.value = '';
+  this.value = ''; msg('m3', '');
 });
+// Cada foto passa por uma avaliação: boa (verde) ou ruim (vermelha, com o motivo).
 function mostrarFotos() {
-  $('fotos').innerHTML = fotos.map(function (f, i) { return '<div><img src="' + f.url + '" alt=""><button type="button" data-i="' + i + '" aria-label="Remover foto">×</button></div>'; }).join('');
+  $('fotos').innerHTML = fotos.map(function (f, i) {
+    return '<div class="' + (f.estado || '') + '"><img src="' + f.url + '" alt="Foto ' + (i + 1) + '"><button type="button" data-i="' + i + '" aria-label="Remover foto">×</button>' +
+      (f.estado ? '<span>' + (f.estado === 'boa' ? '✓ Aprovada' : '✕ Refazer') + '</span>' : '') + '</div>';
+  }).join('');
 }
-$('fotos').addEventListener('click', function (e) { if (e.target.dataset.i) { fotos.splice(Number(e.target.dataset.i), 1); mostrarFotos(); } });
+$('fotos').addEventListener('click', function (e) { if (e.target.dataset.i) { fotos.splice(Number(e.target.dataset.i), 1); mostrarFotos(); msg('m3', ''); } });
 
-// Prepara a foto para a leitura: tamanho bom, cinza e com mais contraste.
+// Prepara a foto para a leitura (tamanho bom, cinza e com mais contraste) e aponta problemas antes de ler.
 function preparar(f) {
   return new Promise(function (ok, falha) {
     var img = new Image();
@@ -220,11 +249,15 @@ function preparar(f) {
       var k = Math.min(1, 2000 / Math.max(img.width, img.height)), c = document.createElement('canvas');
       c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
       var g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
-      var d = g.getImageData(0, 0, c.width, c.height), p = d.data, min = 255, max = 0, i, v;
-      for (i = 0; i < p.length; i += 4) { v = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = v; if (v < min) min = v; if (v > max) max = v; }
+      var d = g.getImageData(0, 0, c.width, c.height), p = d.data, min = 255, max = 0, soma = 0, i, v;
+      for (i = 0; i < p.length; i += 4) { v = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2]; p[i] = v; soma += v; if (v < min) min = v; if (v > max) max = v; }
+      var media = soma / (p.length / 4), problema = null;
+      if (Math.min(img.width, img.height) < 500) problema = 'está pequena demais (pouca resolução)';
+      else if (media < 55) problema = 'está escura demais';
+      else if (max - min < 60) problema = 'está sem contraste (texto apagado ou com reflexo)';
       var fator = 255 / Math.max(1, max - min);
       for (i = 0; i < p.length; i += 4) { v = (p[i] - min) * fator; p[i] = p[i + 1] = p[i + 2] = v; }
-      g.putImageData(d, 0, 0); ok(c);
+      g.putImageData(d, 0, 0); ok({ canvas: c, problema: problema });
     };
     img.onerror = function () { falha(new Error('Não consegui abrir uma das fotos.')); };
     img.src = f.url;
@@ -234,23 +267,42 @@ function preparar(f) {
 $('b3').addEventListener('click', function () {
   var texto = $('texto').value.trim(), b = this;
   if (!fotos.length && texto.length < 10) return msg('m3', 'Envie uma foto do treino ou escreva o treino.');
-  b.disabled = true; b.textContent = 'Lendo o seu treino…'; msg('m3', ''); progresso('prog', 0.05);
-  var textos = [], cadeia = Promise.resolve(), worker = null;
-  if (fotos.length) {
-    cadeia = Tesseract.createWorker('por', 1, { logger: function (m) { if (m.status === 'recognizing text') progresso('prog', (textos.length + m.progress) / fotos.length); } })
+  b.disabled = true; b.textContent = 'Avaliando as fotos…'; msg('m3', ''); progresso('prog', 0.05);
+  // Só as fotos ainda não avaliadas passam pela leitura; as aprovadas guardam o texto lido.
+  var novas = fotos.filter(function (f) { return !f.estado; }), feitas = 0, cadeia = Promise.resolve(), worker = null;
+  if (novas.length) {
+    cadeia = Tesseract.createWorker('por', 1, { logger: function (m) { if (m.status === 'recognizing text') progresso('prog', (feitas + m.progress) / novas.length); } })
       .then(function (w) { worker = w; });
-    fotos.forEach(function (f) {
-      cadeia = cadeia.then(function () { return preparar(f); }).then(function (c) { return worker.recognize(c); })
-        .then(function (r) { textos.push(r.data.text); });
+    novas.forEach(function (f) {
+      cadeia = cadeia.then(function () { return preparar(f); }).then(function (pr) {
+        if (pr.problema) { f.estado = 'ruim'; f.motivo = pr.problema; feitas++; return; }
+        return worker.recognize(pr.canvas).then(function (r) {
+          var l = Leitor.ler(r.data.text), total = 0;
+          l.dias.forEach(function (d) { total += d.exercicios.length; });
+          var reconhecidos = total - l.naoReconhecidas.length;
+          if (r.data.confidence < 45) { f.estado = 'ruim'; f.motivo = 'não deu para ler a ficha (foto borrada, torta, com reflexo ou sem a ficha de treino)'; }
+          else if (reconhecidos < 2) { f.estado = 'ruim'; f.motivo = 'não mostra exercícios que eu consiga reconhecer'; }
+          else { f.estado = 'boa'; f.texto = r.data.text; }
+          feitas++;
+        });
+      });
     });
     cadeia = cadeia.then(function () { return worker.terminate(); });
   }
   cadeia.then(function () {
-    var lido = Leitor.ler(textos.concat([texto]).join('\n'));
-    b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true;
+    b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true; mostrarFotos();
+    var ruins = fotos.filter(function (f) { return f.estado === 'ruim'; });
+    if (ruins.length) {
+      return msg('m3', '<b>' + (ruins.length === 1 ? 'Uma foto não passou' : ruins.length + ' fotos não passaram') + ' na avaliação:</b><br>' +
+        ruins.map(function (f) { return 'Foto ' + (fotos.indexOf(f) + 1) + ': ' + f.motivo + '.'; }).join('<br>') +
+        '<br>' + (ruins.length === 1 ? 'Remova a foto marcada com ✕ e envie outra' : 'Remova as fotos marcadas com ✕ e envie outras') +
+        ', reta, com boa luz e com a ficha inteira aparecendo. Se preferir, escreva esses exercícios no campo de texto.');
+    }
+    var lido = Leitor.ler(fotos.map(function (f) { return f.texto; }).concat([texto]).join('\n'));
     if (!lido.dias.length) return msg('m3', 'Não consegui encontrar exercícios. Tente uma foto mais reta e com mais luz, ou escreva o treino no campo acima.');
     treino = lido; desenharTreino(); etapa(4);
   }).catch(function (e) {
+    if (worker) worker.terminate();
     b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true;
     msg('m3', 'Não deu para ler a foto agora (' + esc(e.message || e) + '). Você pode escrever o treino no campo acima.');
   });
@@ -261,6 +313,12 @@ function opcoesGrupo(sel) {
   return '<option value="">Grupo?</option>' + Object.keys(GRUPOS).map(function (g) { return '<option value="' + g + '"' + (g === sel ? ' selected' : '') + '>' + GRUPOS[g] + '</option>'; }).join('');
 }
 function desenharTreino() {
+  $('confirma').hidden = true; $('b4').hidden = false;
+  var nEx = 0; treino.dias.forEach(function (d) { nEx += d.exercicios.length; });
+  $('resumo').innerHTML = (fotos.length ? '<div class="mini">' + fotos.map(function (f, i) {
+    return '<a href="' + f.url + '" target="_blank" rel="noopener" aria-label="Abrir foto ' + (i + 1) + '"><img src="' + f.url + '" alt=""></a>'; }).join('') + '</div>' : '') +
+    '<p>Encontrei <b>' + treino.dias.length + (treino.dias.length === 1 ? ' treino' : ' treinos') + '</b> com <b>' + nEx + ' exercícios</b>.' +
+    (fotos.length ? ' Toque na foto para ver grande e comparar.' : '') + '</p>';
   $('dias').innerHTML = treino.dias.map(function (d, i) {
     return '<div class="dia" data-d="' + i + '"><div class="topo"><input type="text" value="' + esc(d.nome) + '" data-c="dia" aria-label="Nome do treino"><button class="x" type="button" data-a="tiraDia" aria-label="Remover treino">×</button></div>' +
       '<div class="cab"><span>Grupo muscular</span><span>Tipo</span><span>Séries</span></div>' +
@@ -298,28 +356,41 @@ $('novoDia').addEventListener('click', function () {
   desenharTreino();
 });
 
-// 5. Gerar
+// 5. Confirmar: resumo final antes de usar o ajuste da compra
+var pendente = null;
 $('b4').addEventListener('click', function () {
-  var b = this;
   treino.dias = treino.dias.filter(function (d) { d.exercicios = d.exercicios.filter(function (e) { return e.nome.trim(); }); return d.exercicios.length; });
   desenharTreino();
   if (!treino.dias.length) return msg('m4', 'Coloque pelo menos um exercício.');
   var semGrupo = 0; treino.dias.forEach(function (d) { d.exercicios.forEach(function (e) { if (!e.grupo) semGrupo++; }); });
   if (semGrupo) return msg('m4', 'Escolha o grupo muscular dos exercícios marcados em vermelho.');
-  if (!$('aceite').checked) return msg('m4', 'Marque a caixa de conferência para gerar o plano.');
+  if (!$('aceite').checked) return msg('m4', 'Marque a caixa de conferência para continuar.');
   var dados = { nome: $('nome').value.trim(), frequencia: Number($('frequencia').value), prioritarios: prioridades(),
     dias: treino.dias.map(function (d) { return { nome: d.nome, exercicios: d.exercicios.map(function (e) { return { nome: e.nome, grupo: e.grupo, tipo: e.tipo, series: e.series }; }) }; }) };
-  var plano;
-  try { plano = MDT.montarPlano(dados); } catch (err) { return msg('m4', esc(err.message)); }
-  b.disabled = true; b.textContent = 'Montando o seu plano…'; msg('m4', ''); progresso('prog4', 0.15);
+  try { pendente = { dados: dados, plano: MDT.montarPlano(dados) }; } catch (err) { return msg('m4', esc(err.message)); }
+  msg('m4', '');
+  $('confLista').innerHTML = '<li>' + esc(dados.nome) + ' · ' + dados.frequencia + 'x por semana · prioridade: ' +
+    esc(dados.prioritarios.map(function (g) { return GRUPOS[g]; }).join(' e ')) + '</li>' +
+    dados.dias.map(function (d) {
+      return '<li><b>' + esc(d.nome) + ':</b> ' + esc(d.exercicios.map(function (e) { return e.nome + ' (' + e.series + ')'; }).join(', ')) + '</li>';
+    }).join('');
+  $('b4').hidden = true; $('confirma').hidden = false; msg('m5', '');
+  $('confirma').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+$('bVolta').addEventListener('click', function () { $('confirma').hidden = true; $('b4').hidden = false; $('aceite').checked = false; });
+
+// 6. Gerar (usa o ajuste da compra)
+$('bConfirma').addEventListener('click', function () {
+  var b = this, dados = pendente.dados, plano = pendente.plano;
+  b.disabled = true; $('bVolta').disabled = true; b.textContent = 'Montando o seu plano…'; msg('m5', ''); progresso('prog4', 0.15);
   PlanoPDF.desenharPlano(plano, $('render'));
   PlanoPDF.gerarPdf($('render'), 1.6).then(function (pdf) {
     pdfBase64 = pdf; progresso('prog4', 0.75); b.textContent = 'Enviando…';
     return api({ acao: 'concluir', email: $('email').value.trim(), nome: dados.nome, frequencia: dados.frequencia,
       prioritarios: dados.prioritarios, dores: $('dores').value.trim(), treino: dados, pdf: pdf });
   }).then(function (r) {
-    b.disabled = false; b.textContent = 'Gerar meu plano'; $('prog4').hidden = true;
-    if (!r.ok) { if (r.usada) return etapa('usada'); return msg('m4', esc(r.erro)); }
+    b.disabled = false; $('bVolta').disabled = false; b.textContent = 'Sim, montar o meu plano'; $('prog4').hidden = true;
+    if (!r.ok) { if (r.usada) return etapa('usada'); return msg('m5', esc(r.erro)); }
     var bytes = atob(pdfBase64), arr = new Uint8Array(bytes.length);
     for (var i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
     $('baixar').href = URL.createObjectURL(new Blob([arr], { type: 'application/pdf' }));
@@ -333,8 +404,8 @@ $('b4').addEventListener('click', function () {
     });
     etapa(5);
   }).catch(function (e) {
-    b.disabled = false; b.textContent = 'Gerar meu plano'; $('prog4').hidden = true;
-    msg('m4', 'Não deu para gerar agora. Confira a internet e tente de novo.');
+    b.disabled = false; $('bVolta').disabled = false; b.textContent = 'Sim, montar o meu plano'; $('prog4').hidden = true;
+    msg('m5', 'Não deu para gerar agora. O seu ajuste não foi usado: confira a internet e tente de novo.');
   });
 });
 
