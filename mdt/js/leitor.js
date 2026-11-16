@@ -156,7 +156,7 @@ var Leitor = (function () {
         linha = dia[2];
       }
       if (!ex && !sr) return;
-      if (!atual) novoDia('Treino A');
+      if (!atual) { novoDia(''); atual.semNome = true; }
       if (ex) {
         atual.exercicios.push({ nome: ex[0], escrito: linha, grupo: ex[1], tipo: ex[2], series: sr ? sr.series : 3, reps: sr ? sr.reps : '' });
       } else {
