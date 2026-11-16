@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
 <link href="css/plano.css" rel="stylesheet">
 <script src="config.js"></script>
-<script src="js/leitor.js?v=2"></script>
+<script src="js/leitor.js?v=3"></script>
 <script src="js/mdt.js"></script>
 <script src="js/plano-pdf.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
@@ -84,6 +84,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .ex small{grid-column:1/-1;font-size:12px;color:var(--muted)}
 .dia .cab{display:grid;grid-template-columns:1fr 1fr 70px 34px;gap:6px;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .dia .cab span:last-child{grid-column:3}
+.dia .origem{display:block;font-size:12px;color:var(--muted);margin:-4px 0 6px}
+.juntar{background:transparent;border:0;color:var(--gold2);font:600 13px 'Inter',sans-serif;padding:0 0 8px;cursor:pointer;text-decoration:underline}
 .x{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;cursor:pointer;font-size:16px}
 .mais{background:transparent;border:1px dashed var(--line);color:var(--gold2);border-radius:8px;padding:9px;width:100%;cursor:pointer;font:600 14px 'Inter',sans-serif;margin-top:6px}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#d6d3cb;font-weight:400}
@@ -314,7 +316,13 @@ $('b3').addEventListener('click', function () {
         '<br>' + (ruins.length === 1 ? 'Remova a foto marcada com ✕ e envie outra' : 'Remova as fotos marcadas com ✕ e envie outras') +
         ', reta, com boa luz e com a ficha inteira aparecendo. Se preferir, escreva esses exercícios no campo de texto.');
     }
-    var lido = Leitor.ler(fotos.map(function (f) { return f.texto; }).concat([texto]).join('\n'));
+    // Cada foto (e o texto escrito) é lida separada: foto sem título de treino vira um treino próprio,
+    // em vez de grudar no treino da foto anterior. O aluno junta na conferência se for o mesmo treino.
+    var lido = { dias: [] };
+    fotos.map(function (f, i) { return { texto: f.texto, origem: 'foto ' + (i + 1) }; }).concat([{ texto: texto, origem: 'texto' }]).forEach(function (p) {
+      Leitor.ler(p.texto).dias.forEach(function (d) { d.origem = p.origem; lido.dias.push(d); });
+    });
+    lido.dias.forEach(function (d, i) { if (d.semNome) d.nome = 'Treino ' + String.fromCharCode(65 + i); });
     if (!lido.dias.length) return msg('m3', 'Não consegui encontrar exercícios. Tente uma foto mais reta e com mais luz, ou escreva o treino no campo acima.');
     treino = lido; desenharTreino(); etapa(4);
   }).catch(function (e) {
@@ -337,6 +345,8 @@ function desenharTreino() {
     (fotos.length ? ' Toque na foto para ver grande e comparar.' : '') + '</p>';
   $('dias').innerHTML = treino.dias.map(function (d, i) {
     return '<div class="dia" data-d="' + i + '"><div class="topo"><input type="text" value="' + esc(d.nome) + '" data-c="dia" aria-label="Nome do treino"><button class="x" type="button" data-a="tiraDia" aria-label="Remover treino">×</button></div>' +
+      (d.origem && d.origem !== 'texto' ? '<small class="origem">Lido da ' + d.origem + '</small>' : '') +
+      (i > 0 ? '<button class="juntar" type="button" data-a="juntar">↑ É o mesmo treino de cima? Juntar</button>' : '') +
       '<div class="cab"><span>Grupo muscular</span><span>Tipo</span><span>Séries</span></div>' +
       d.exercicios.map(function (e, j) {
         return '<div class="ex' + (e.grupo ? '' : ' falta') + '" data-e="' + j + '"><div class="campos">' +
@@ -363,6 +373,7 @@ $('dias').addEventListener('click', function (e) {
   var a = e.target.dataset.a; if (!a) return;
   var d = e.target.closest('.dia');
   if (a === 'tiraDia') treino.dias.splice(d.dataset.d, 1);
+  if (a === 'juntar') { var k = Number(d.dataset.d); treino.dias[k - 1].exercicios = treino.dias[k - 1].exercicios.concat(treino.dias[k].exercicios); treino.dias.splice(k, 1); }
   if (a === 'novoEx') treino.dias[d.dataset.d].exercicios.push({ nome: '', grupo: '', tipo: 'B', series: 3 });
   if (a === 'tiraEx') treino.dias[d.dataset.d].exercicios.splice(e.target.closest('.ex').dataset.e, 1);
   desenharTreino();
