@@ -126,11 +126,14 @@ var Leitor = (function () {
 
   // "4x10", "4 x 8-12", "4 series de 10", "3 x falha"
   function seriesReps(linha) {
-    var l = normal(linha).replace(/(\d)\s*[x×]\s*(\d|falha)/g, '$1 x $2');
+    var l = normal(String(linha).replace(/(\d)\s*[-–—]\s*(\d)/g, '$1 a $2')).replace(/(\d)\s*[x×]\s*(\d|falha)/g, '$1 x $2');
     var m = l.match(/(\d{1,2})\s*x\s*(\d{1,2}(?:\s*(?:a|-|ate)\s*\d{1,2})?|falha)/);
     if (m) return { series: parseInt(m[1], 10), reps: m[2].replace(/(\d)\s*(?:a|-|ate)\s*(\d)/, '$1-$2').replace(/\s/g, '') };
     m = l.match(/(\d{1,2})\s*(series|serie|sets?)\b/);
     if (m) return { series: parseInt(m[1], 10), reps: '' };
+    // Quando a leitura perde o "x": "2 10-15" = 2 séries de 10 a 15.
+    m = l.match(/(?:^|\s)([1-8])\s+(\d{1,2}) a (\d{1,2})\b/);
+    if (m) return { series: parseInt(m[1], 10), reps: m[2] + '-' + m[3] };
     return null;
   }
 
