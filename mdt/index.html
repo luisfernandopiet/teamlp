@@ -276,10 +276,63 @@ function preparar(f) {
   });
 }
 
+// Foto em JPEG de no máximo 1600 px, em base64, para mandar à leitura por IA.
+function fotoBase64(f) {
+  return new Promise(function (ok, falha) {
+    var img = new Image();
+    img.onload = function () {
+      var k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      ok(c.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    };
+    img.onerror = function () { falha(new Error('Não consegui abrir uma das fotos.')); };
+    img.src = f.url;
+  });
+}
+
+// 1º caminho: a IA lê todas as fotos juntas. Devolve o treino, 'parar' (fotos sem ficha) ou null (usar o leitor do celular).
+function lerComIA(texto) {
+  if (!fotos.length) return Promise.resolve(null);
+  return Promise.all(fotos.map(fotoBase64)).then(function (dados) {
+    return api({ acao: 'lerFotos', email: $('email').value.trim(), fotos: dados.map(function (d) { return { tipo: 'image/jpeg', dados: d }; }) });
+  }).then(function (r) {
+    if (!r.ok) return null;
+    if (!r.treinos.length) {
+      fotos.forEach(function (f) { f.estado = 'ruim'; f.motivo = r.aviso || 'não encontrei uma ficha de treino'; });
+      return 'parar';
+    }
+    fotos.forEach(function (f) { f.estado = 'boa'; });
+    var dias = r.treinos.filter(function (t) { return t.exercicios.length; }).map(function (t, i) {
+      return { nome: t.nome || 'Treino ' + String.fromCharCode(65 + i), exercicios: t.exercicios.map(function (e) {
+        return { nome: e.nome, grupo: e.grupo, tipo: e.tipo, series: Math.min(8, Math.max(1, e.series || 3)) };
+      }) };
+    });
+    Leitor.ler(texto).dias.forEach(function (d) { d.origem = 'texto'; dias.push(d); });
+    return { dias: dias };
+  }).catch(function () { return null; });
+}
+
 $('b3').addEventListener('click', function () {
   var texto = $('texto').value.trim(), b = this;
   if (!fotos.length && texto.length < 10) return msg('m3', 'Envie uma foto do treino ou escreva o treino.');
-  b.disabled = true; b.textContent = 'Avaliando as fotos…'; msg('m3', ''); progresso('prog', 0.05);
+  b.disabled = true; b.textContent = 'Lendo o seu treino…'; msg('m3', ''); progresso('prog', 0.3);
+  lerComIA(texto).then(function (r) {
+    if (r === 'parar') {
+      b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true; mostrarFotos();
+      return msg('m3', '<b>Não encontrei uma ficha de treino nas fotos.</b><br>' + esc(fotos[0].motivo) + '<br>Envie outra foto, reta e com a ficha inteira aparecendo, ou escreva o treino no campo de texto.');
+    }
+    if (r && r.dias.length) {
+      b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true; mostrarFotos();
+      treino = r; desenharTreino(); etapa(4); return;
+    }
+    lerNoCelular(b, texto);
+  });
+});
+
+// 2º caminho (reserva): leitura gratuita no próprio celular, foto por foto.
+function lerNoCelular(b, texto) {
+  b.textContent = 'Avaliando as fotos…'; progresso('prog', 0.05);
   // Só as fotos ainda não avaliadas passam pela leitura; as aprovadas guardam o texto lido.
   var novas = fotos.filter(function (f) { return !f.estado; }), feitas = 0, cadeia = Promise.resolve(), worker = null;
   if (novas.length) {
@@ -330,7 +383,7 @@ $('b3').addEventListener('click', function () {
     b.disabled = false; b.textContent = 'Ler meu treino'; $('prog').hidden = true;
     msg('m3', 'Não deu para ler a foto agora (' + esc(e.message || e) + '). Você pode escrever o treino no campo acima.');
   });
-});
+}
 
 // 4. Conferir
 function opcoesGrupo(sel) {
